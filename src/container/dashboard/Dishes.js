@@ -124,7 +124,7 @@ export const FoodCard = ({ meal, setError }) => {
           </div>
           <div className="flex justify-between item-center gap">
             <Button type="ghost" onClick={handleShowDetails}>
-              <InfoCircleOutlined /> Details
+              <InfoCircleOutlined /> Details 
             </Button>
             {/* <Button
               type="danger"
