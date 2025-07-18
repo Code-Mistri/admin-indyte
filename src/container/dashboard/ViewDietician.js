@@ -98,7 +98,7 @@ export default function ViewUser() {
                         size={200}
                         src={
                           selectDietitian?.profile ||
-                          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
+                          'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
                         }
                       />
                     </Card>
@@ -136,8 +136,7 @@ export default function ViewUser() {
                                 className="w-full"
                                 src={
                                   client?.profile ||
-                                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
-                                }
+'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'                                }
                               />
                             </Col>
                             <Col xs={12}>

@@ -12,6 +12,10 @@ import { BasicFormWrapper, Main } from '../styled';
 import { API_ENDPOINT } from '../../utils/endpoints';
 import { api } from '../../utils/axios-util';
 
+const APP_ID = process.env.REACT_APP_COMETCHAT_APP_ID;
+const REGION = process.env.REACT_APP_COMETCHAT_REGION;
+const AUTH_KEY = process.env.REACT_APP_COMETCHAT_AUTH_KEY;
+
 export default function DieticianForm() {
   const [form] = Form.useForm();
   const router = useHistory();
@@ -58,39 +62,68 @@ export default function DieticianForm() {
   // };
 
   const handleCreateChatUser = async ({ userId, username }) => {
+    // Initialize CometChat if not already initialized
+    if (!CometChat.isInitialized()) {
+        try {
+            await CometChat.init(APP_ID, new CometChat.AppSettingsBuilder()
+                .subscribePresenceForAllUsers()
+                .setRegion(REGION)
+                .build());
+            console.log('CometChat initialized');
+        } catch (initError) {
+            console.error('CometChat Initialization failed:', initError);
+            throw new Error('CometChat Initialization failed');
+        }
+    }
     const user = new CometChat.User(userId);
     user.setName(username);
     console.log('USER:', user);
-
-    const response = await CometChatUIKit.createUser(user);
-    console.log({ response });
-  };
+    try {
+        const response = await CometChat.createUser(user, AUTH_KEY);
+        console.log('CometChat user created:', response);
+    } catch (error) {
+        console.error('Error creating CometChat user:', error);
+        // Re-throw a string error to ensure consistency
+        throw new Error('Failed to create chat user');
+    }
+};
 
   const onFinish = async (values) => {
     setLoading(true);
     console.log('Success:', values);
     try {
-      const token = Cookies.get('access_token').split(' ')[1];
-      console.log({ token });
-      const res = await api.post(`${API_ENDPOINT}/dietician/register`, {
-        ...values,
-      });
-      console.log({ res });
-      if (res.status !== 201) {
-        throw new Error(await res.data);
-      }
+        // Prepend '+91' if not present
+        const modifiedValues = {
+            ...values,
+            phone: values.phone.startsWith('+91') ? values.phone : `+91${values.phone}`,
+        };
 
-      const dietician = await res.data;
-      if (!dietician) {
-        throw new Error('User Not found');
-      }
-      await handleCreateChatUser({ username: values.username, userId: dietician.id });
-      router.push('/admin/dietitians');
+        const token = Cookies.get('access_token').split(' ')[1];
+        console.log({ token });
+        const res = await api.post(`${API_ENDPOINT}/dietician/register`, modifiedValues);
+        console.log({ res });
+        if (res.status !== 201) {
+            // Ensure a string value is thrown
+            throw new Error(typeof res.data === 'string' ? res.data : 'Registration failed');
+        }
+
+        const dietician = await res.data;
+        if (!dietician) {
+            throw new Error('User not found');
+        }
+        // Wrap chat user creation in try/catch to catch its error
+        try {
+            await handleCreateChatUser({ username: values.username, userId: dietician.id });
+        } catch (err) {
+            throw new Error('Dietician registered but failed to create chat user');
+        }
+        router.push('/admin/dietitians');
     } catch (err) {
-      console.error({ err });
-      setError('Failed to create new dietitian');
+        console.error(err);
+        // Set error state as a string
+        setError(err.message || 'Failed to create new dietitian');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -141,9 +174,12 @@ export default function DieticianForm() {
                   <Form.Item
                     label="Phone"
                     name="phone"
-                    rules={[{ required: true, message: 'Please add phone number of 10 digits' }]}
+                    rules={[
+                      { required: true, message: 'Please add phone number of 10 digits' },
+                      { len: 10, message: 'Phone number must be 10 digits' }
+                    ]}
                   >
-                    <Input />
+                    <Input addonBefore="+91" maxLength={10} />
                   </Form.Item>
                   <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email' }]}>
                     <Input />

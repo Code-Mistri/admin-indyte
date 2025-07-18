@@ -291,7 +291,7 @@ const Dietitians = () => {
               style={{ width: '40px', borderRadius: '4%' }}
               src={
                 dietician?.profile ||
-                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
+                'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
               }
               alt="User"
             />
@@ -473,7 +473,7 @@ const Dietitians = () => {
                 size={128}
                 src={
                   selectDietitian?.profile ||
-                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
+                  'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
                 }
               />
               <Typography.Title level={4} style={{ width: 'fit-content', margin: '1rem auto' }}>

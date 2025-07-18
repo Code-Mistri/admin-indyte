@@ -126,7 +126,7 @@ export const FoodCard = ({ meal, setError }) => {
             <Button type="ghost" onClick={handleShowDetails}>
               <InfoCircleOutlined /> Details
             </Button>
-            <Button
+            {/* <Button
               type="danger"
               onClick={async () => {
                 setLoading(true);
@@ -153,7 +153,7 @@ export const FoodCard = ({ meal, setError }) => {
                   </>
                 )}
               </div>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </Card>
