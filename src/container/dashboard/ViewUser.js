@@ -112,7 +112,7 @@ export default function ViewUser() {
                     size={128}
                     src={
                       user?.profile ||
-                      'https://images.unsplash.com/photo-1509773896068-7fd415d91e2e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bmlnaHQlMjBza3l8ZW58MHx8MHx8fDA%3D'
+                      'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
                     }
                   />
                 </div>
@@ -125,7 +125,7 @@ export default function ViewUser() {
                     <p className="my">Phone: {user?.phone}</p>
                     <p className="my">Gender: {user?.gender}</p>
                     <p className="my">Date of Birth: {getFormattedDate(new Date(user?.date_of_birth))}</p>
-                    {dieticain?.name && <p className="my">Dieticain: {dieticain?.name}</p>}
+                    {dieticain?.name && <p className="my">Dietitain: {dieticain?.name}</p>}
                   </Card>
                 </div>
                 <div className="my-1">
@@ -133,7 +133,7 @@ export default function ViewUser() {
                     <p className="my">Goal: {user?.goal}</p>
                     <p className="my">Height: {`${user?.height} ${user.height_unit}`}</p>
                     <p className="my">Weight: {`${user?.weight} ${user.weight_unit}`}</p>
-                    <p className="my">Dietician: {user?.dietician}</p>
+                    <p className="my">Dietitian: {dieticain?.name}</p>
                     <p className="my">Sleep Target: {user?.sleep_target}</p>
                     <p className="my">Step Target: {user?.step_target}</p>
                     <p className="my">Water Target: {user?.water_target}</p>

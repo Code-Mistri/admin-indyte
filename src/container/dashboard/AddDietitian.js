@@ -88,42 +88,51 @@ export default function DieticianForm() {
     }
 };
 
+  const handleImageChange = info => {
+    if (info.file.status === 'done' || info.file.status === 'uploading' || info.file.originFileObj) {
+      const file = info.file.originFileObj || info.file;
+      setImageFile(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   const onFinish = async (values) => {
     setLoading(true);
-    console.log('Success:', values);
     try {
-        // Prepend '+91' if not present
-        const modifiedValues = {
-            ...values,
-            phone: values.phone.startsWith('+91') ? values.phone : `+91${values.phone}`,
-        };
-
-        const token = Cookies.get('access_token').split(' ')[1];
-        console.log({ token });
-        const res = await api.post(`${API_ENDPOINT}/dietician/register`, modifiedValues);
-        console.log({ res });
-        if (res.status !== 201) {
-            // Ensure a string value is thrown
-            throw new Error(typeof res.data === 'string' ? res.data : 'Registration failed');
-        }
-
-        const dietician = await res.data;
-        if (!dietician) {
-            throw new Error('User not found');
-        }
-        // Wrap chat user creation in try/catch to catch its error
-        try {
-            await handleCreateChatUser({ username: values.username, userId: dietician.id });
-        } catch (err) {
-            throw new Error('Dietician registered but failed to create chat user');
-        }
-        router.push('/admin/dietitians');
+      const modifiedValues = {
+        ...values,
+        phone: values.phone.startsWith('+91') ? values.phone : `+91${values.phone}`,
+      };
+      const formData = new FormData();
+      Object.entries(modifiedValues).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+      if (imageFile) {
+        formData.append('profileImage', imageFile);
+      }
+      const token = Cookies.get('access_token').split(' ')[1];
+      const res = await api.post(`${API_ENDPOINT}/dietician/register`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (res.status !== 201) {
+        throw new Error(typeof res.data === 'string' ? res.data : 'Registration failed');
+      }
+      const dietician = await res.data;
+      if (!dietician) {
+        throw new Error('User not found');
+      }
+      try {
+        await handleCreateChatUser({ username: values.username, userId: dietician.id });
+      } catch (err) {
+        throw new Error('Dietician registered but failed to create chat user');
+      }
+      router.push('/admin/dietitians');
     } catch (err) {
-        console.error(err);
-        // Set error state as a string
-        setError(err.message || 'Failed to create new dietitian');
+      setError(err.message || 'Failed to create new dietitian');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -146,6 +155,21 @@ export default function DieticianForm() {
         <Card>
           <Row align="center">
             <Col xs={24} md={12}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
+                <img
+                  src={preview || '/default-profile.png'}
+                  alt="Dietitian"
+                  style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee', marginBottom: 10 }}
+                />
+                <Upload
+                  showUploadList={false}
+                  beforeUpload={() => false}
+                  accept="image/*"
+                  onChange={handleImageChange}
+                >
+                  <Button icon={<UploadOutlined />}>Select Image</Button>
+                </Upload>
+              </div>
               <BasicFormWrapper>
                 <Form form={form} name="dietician_form" onFinish={onFinish} onFinishFailed={onFinishFailed}>
                   <Form.Item label="Username" name="username" rules={[{ required: true }]}>
