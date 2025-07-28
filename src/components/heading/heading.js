@@ -5,7 +5,6 @@ import * as headings from './style';
 const Heading = props => {
   const { as, children, className, id } = props;
   const StyledHeading = as ? headings[as.toUpperCase()] : headings.H1;
-
   return (
     <StyledHeading className={className} id={id}>
       {children}

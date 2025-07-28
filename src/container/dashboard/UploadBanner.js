@@ -17,24 +17,18 @@ const UploadBannerForm = () => {
   const handleSubmit = async (event) => {
     setPending(true);
 
-    const token = Cookies.get('access_token');
-    console.log('Uplaoding');
     event.preventDefault();
     try {
       const formData = new FormData();
-      console.log({ bannerTitle });
       if (!bannerTitle) {
         throw new Error('Please set the name');
       }
-      console.log({ selectedFile });
       formData.append('image', selectedFile);
       formData.append('name', bannerTitle);
-      console.log({ formData: formData.get('image') });
 
       const res = await api.post('/admin/addBanner', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      console.log({ res });
       if (res.status === 201) {
         router.push('/admin/app-banners');
       } else {
@@ -49,10 +43,8 @@ const UploadBannerForm = () => {
   };
 
   const beforeUpload = (file) => {
-    console.log('uplaod cjeck');
 
     const isImage = file.type.includes('image/');
-    console.log({ isImage });
     if (!isImage) {
       setError('You can only upload image files!');
       return;

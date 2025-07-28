@@ -7,7 +7,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { Cards } from '../../components/cards/frame/cards-frame';
 import { Main, BasicFormWrapper } from '../styled';
 import { API_ENDPOINT } from '../../utils/endpoints';
-import { supabaseClient } from '../../utils/supabase-client';
+import { api } from '../../utils/axios-util';
 
 const { Option } = Select;
 const MealForm = () => {
@@ -23,132 +23,87 @@ const MealForm = () => {
   const [preview, setPreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
 
-  const handleUpload = async (file) => {
+  const handleImageChange = (file) => {
+    setImageFile(file);
     setImgLoading(true);
-
-    // Create a preview URL for the selected image
-    const fileReader = new FileReader();
-    fileReader.onload = (e) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
       setPreview(e.target.result);
-    };
-    fileReader.readAsDataURL(file);
-
-    try {
-      const bucketName = 'indyte';
-      const filePath = `meal-images/meal_image_${v4()}_${file.name}`;
-
-      const { data, error: sError } = await supabaseClient.storage.from(bucketName).upload(filePath, file, {
-        cacheControl: 3600,
-        upsert: false,
-      });
-      console.log({ supabasedata: data });
-
-      if (sError) throw sError;
-
-      const { data: imgData, error: publicURLError } = await supabaseClient.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      if (publicURLError) throw publicURLError;
-
-      setImageUrl(imgData.publicUrl);
-      console.log('Image uploaded successfully!', imgData.publicUrl);
-      return imgData.publicUrl;
-    } catch (err) {
-      console.error({ err });
-      setError(err.message);
-      return null;
-    } finally {
       setImgLoading(false);
-      setPreview(null);
-    }
+    };
+    reader.readAsDataURL(file);
+    return false; // prevent Upload from auto-uploading
   };
 
   const onFinish = async () => {
     setLoading(true);
     const values = form.getFieldsValue();
-    if (!values || values.name) {
+    if (!values.mealName || !values.description || !values.category || !values.calories || !imageFile) {
+      setError('Missing some values');
+      setLoading(false);
       return;
     }
     const allNutrients = {};
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < values.nutritions.length; i++) {
-      const item = values.nutritions[i];
+    nutritions.forEach((item) => {
       allNutrients[item.type] = item.value;
-    }
-    // console.log('Received values of form: ', values, { allNutrients });
+    });
     try {
-      const { mealName: name, description, ingredients, calories, recipeSteps: steps, category } = values;
-
-      if (!name || !description || !ingredients || !calories || !steps || !category || !imageFile) {
-        setError('Missing some values');
-      }
-      console.log({
-        body: { name, description, ingredients, steps, category, image: imageUrl },
-        nutrition: { ...allNutrients, calories },
-      });
-      const image = await handleUpload(imageFile);
-      if (!image) {
-        throw new Error('Image upload failed');
-      }
-      const res = await axios.post(`${API_ENDPOINT}/meal`, {
-        body: {
-          name,
-          description,
-          ingredients,
-          steps,
-          image,
-        },
-
-        nutrition: {
-          calories: calories || 0,
-          protein: allNutrients?.protein || 0,
-          carbs: allNutrients?.carbs || 0,
-          fats: allNutrients?.fats || 0,
-        },
+      const formData = new FormData();
+      formData.append('mealName', values.mealName);
+      formData.append('description', values.description);
+      formData.append('category', values.category);
+      formData.append('calories', values.calories);
+      formData.append('ingredients', JSON.stringify(ingredients.map(i => i.text)));
+      formData.append('steps', JSON.stringify(steps.map(s => s.text)));
+      formData.append('nutritions', JSON.stringify(nutritions));
+      formData.append('image', imageFile);
+      const res = await api.post(`/meal`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (res.status !== 200) {
         setError('Failed to create meal');
       }
-
-      console.log({ res });
       setSuccess(true);
+      setImageUrl('');
+      setImageFile(null);
+      setPreview(null);
+      form.resetFields();
+      setSteps([{ text: '' }]);
+      setIngredients([{ text: '' }]);
+      setNutritions([{ type: '', value: '' }]);
     } catch (err) {
-      console.log({ err });
-      setError(err.message);
+      console.log(err)
+      const errorMessage = err?.response?.data?.errors?.meal || err?.message
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
   const addStep = () => {
     setSteps([...steps, { text: '' }]);
   };
-
   const updateStep = (index, event) => {
     const newSteps = [...steps];
     newSteps[index].text = event.target.value;
     setSteps(newSteps);
     form.setFieldsValue({ recipeSteps: newSteps.map((step) => step.text) });
   };
-
   const removeStep = (index) => {
     const newSteps = [...steps];
     newSteps.splice(index, 1);
     setSteps(newSteps);
     form.setFieldsValue({ recipeSteps: newSteps.map((step) => step.text) });
   };
-
   const addIngredient = () => {
     setIngredients([...ingredients, { text: '' }]);
   };
-
   const updateIngredient = (index, event) => {
     const newIngredients = [...ingredients];
     newIngredients[index].text = event.target.value;
     setIngredients(newIngredients);
     form.setFieldsValue({ ingredients: newIngredients.map((ingredient) => ingredient.text) });
   };
-
   const removeIngredient = (index) => {
     const newIngredients = [...ingredients];
     newIngredients.splice(index, 1);
@@ -158,14 +113,12 @@ const MealForm = () => {
   const addNutrition = () => {
     setNutritions([...nutritions, { type: '', value: '' }]);
   };
-
   const updateNutrition = (index, field, value) => {
     const newNutritions = [...nutritions];
     newNutritions[index][field] = value;
     setNutritions(newNutritions);
     form.setFieldsValue({ nutritions: newNutritions });
   };
-
   const removeNutrition = (index) => {
     const newNutritions = [...nutritions];
     newNutritions.splice(index, 1);
@@ -176,7 +129,7 @@ const MealForm = () => {
   return (
     <>
       {error && (
-        <Modal open={error} onOk={() => setError(null)} onCancel={() => setError(null)}>
+        <Modal open={!!error} onOk={() => setError(null)} onCancel={() => setError(null)}>
           <Card style={{ color: 'red' }}>
             <Typography>Oops</Typography>
             {error}
@@ -184,7 +137,7 @@ const MealForm = () => {
         </Modal>
       )}
       {success && (
-        <Modal open={success} onOk={() => setSuccess(null)} onCancel={() => setSuccess(null)}>
+        <Modal open={!!success} onOk={() => setSuccess(null)} onCancel={() => setSuccess(null)}>
           <Card>
             <Typography style={{ color: 'green' }}>Meal Created Successfully</Typography>
           </Card>
@@ -200,13 +153,7 @@ const MealForm = () => {
                   <Form.Item label="Meal Image">
                     <Upload
                       name="file"
-                      action={imageUrl || 'https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188'}
-                      listType="picture-card"
-                      beforeUpload={(file) => {
-                        console.log({ file });
-                        setPreview(URL.createObjectURL(file));
-                        setImageFile(file);
-                      }}
+                      beforeUpload={handleImageChange}
                       showUploadList={false}
                     >
                       {preview && !imgLoading ? (
@@ -227,7 +174,6 @@ const MealForm = () => {
                       )}
                     </Upload>
                   </Form.Item>
-
                   <Form.Item
                     name="mealName"
                     rules={[{ required: true, message: 'Please input the meal name!' }]}
@@ -254,7 +200,6 @@ const MealForm = () => {
                           <Option value="protein">Protein</Option>
                           <Option value="fats">Fats</Option>
                           <Option value="carbs">Carbohydrates</Option>
-                          {/* Add more options as needed */}
                         </Select>
                         <InputNumber
                           value={nutrition?.value}
@@ -278,7 +223,6 @@ const MealForm = () => {
                   >
                     <Input.TextArea placeholder="Description" />
                   </Form.Item>
-
                   <Form.Item label="Ingredients" name="ingredients">
                     {ingredients.map((ingredient, index) => (
                       <div key={index} className="flex justify-between gap mb">
@@ -309,7 +253,6 @@ const MealForm = () => {
                     ))}
                     <Button onClick={addStep}>Add Step</Button>
                   </Form.Item>
-
                   <Form.Item
                     name="category"
                     label="Category"
@@ -317,7 +260,6 @@ const MealForm = () => {
                   >
                     <Input placeholder="eg. Drinks" />
                   </Form.Item>
-
                   <Form.Item style={{ marginTop: '1rem ' }}>
                     <Button htmlType="submit" size="large" type="primary" className="btn-mid">
                       <div className="flex-center gap">{loading ? <Loader2 className="animate-spin" /> : 'Submit'}</div>

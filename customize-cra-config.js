@@ -1,6 +1,6 @@
-import { theme } from './src/config/theme/themeVariables';
-
 const CracoLessPlugin = require('craco-less');
+const { theme } = require('./src/config/theme/themeVariables');
+
 
 module.exports = {
   webpack: {

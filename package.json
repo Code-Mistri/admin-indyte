@@ -87,7 +87,7 @@
   "homepage": "/",
   "scripts": {
     "start": "craco start",
-    "build": "set \"GENERATE_SOURCEMAP=false\" && craco --max-old-space-size=4096 build",
+    "build": "GENERATE_SOURCEMAP=false craco --max-old-space-size=4096 build",
     "test": "craco test",
     "eject": "craco eject"
   },
@@ -124,7 +124,6 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.30.1",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "esm": "^3.2.25",
     "prettier": "^2.7.1",
     "react-hot-loader": "^4.13.0",
     "redux-devtools-extension": "^2.13.9",

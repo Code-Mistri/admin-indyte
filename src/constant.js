@@ -1,0 +1,1 @@
+export const DUMMY_PROFILE_URL = "https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg"

@@ -13,7 +13,7 @@ const AutoCompleteStyled = Styled(AutoComplete)`
         align-items: center;
         height: 37px !important;
         padding: 0 !important;
-        border-color: #E3E6EF !important;
+        border-color: #a9bdfaec !important;
         .ant-select-selection-search{
             .ant-input-affix-wrapper{
                 padding: 0 20px;

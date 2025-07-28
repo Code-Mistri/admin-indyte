@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
@@ -11,8 +12,10 @@ import { useMealStatStore, useMealStore } from '../../zustand/meal-store';
 import { API_ENDPOINT } from '../../utils/endpoints';
 import { useAllDieticiansState, useAllUserState } from '../../zustand/users-store';
 import { decryptData, getFormattedDate } from '../../utils/helper-functions';
+import { api } from '../../utils/axios-util';
 
 const { Option } = Select;
+
 export default function AllMealStats() {
   const { role, id } = useSelector((state) => {
     return {
@@ -25,199 +28,210 @@ export default function AllMealStats() {
   const [error, setError] = useState();
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    perPage: 10,
+    totalCount: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const [statData, setStatData] = useState({
+    totalMeals: 0,
+    finishedMeals: 0,
+    notFinishedMeals: 0,
+  });
+
   // filters
-  const [filterUserStats, setFilterUserStats] = useState([]);
   const [selUserId, setSelUserID] = useState();
   const [selRange, setSelRange] = useState();
   const [selStatus, setSelStatus] = useState();
   const [selDietitian, setSelDietitian] = useState();
+
   // main data
   const { allDietitians, setAllDieticians } = useAllDieticiansState();
   const { mealsStats, setMealsStat } = useMealStatStore();
   const { allUsers, setAllUsers } = useAllUserState();
 
-  useEffect(() => {
+  // Build query parameters for API call
+  const buildQueryParams = useCallback(() => {
+    const params = new URLSearchParams();
+    params.append('page', currentPage.toString());
+    params.append('perPage', perPage.toString());
+
+    if (selUserId) params.append('userId', selUserId.toString());
+    if (selDietitian) {
+      // Find dietician ID by name
+      // const dietician = allDietitians.find(d => d.name === selDietitian);
+      // if (dietician) 
+        params.append('dieticianId', selDietitian);
+      }
+    if (selStatus) {
+      const statusValue = selStatus === 'pending' ? 'unfinished' : selStatus;
+      params.append('status', statusValue);
+    }
+    if (selRange && selRange !== 'all') {
+      params.append('dateRange', selRange);
+    }
+
+    return params.toString();
+  }, [currentPage, perPage, selUserId, selDietitian, selStatus, selRange, allDietitians]);
+
+  // Fetch meals stats with filters
+  const fetchMealsStat = useCallback(async () => {
     setLoading(true);
-    const fetchMealsStat = async () => {
-      try {
-        const response = await axios.get(`${API_ENDPOINT}/all-meal-stats?page=${currentPage}`);
-        console.log({ response });
-        if (response.status !== 200) {
-          throw new Error('Try again');
-        }
-        const data = await response.data;
-        console.log(data);
-        setMealsStat(data.data);
-      } catch (err) {
-        console.error({ err });
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchAllUsers = async () => {
-      setLoading(true);
-      try {
-        let res;
-        let data;
-        if (userRole === 'dietician') {
-          res = await axios.get(`${API_ENDPOINT}/getclients?dieticianId=${id}`);
-          console.log({ res });
-          if (res.status !== 200) {
-            throw new Error('Could not get users');
-          }
-          data = await res.data?.clients?.user;
-        } else {
-          res = await axios.get(`${API_ENDPOINT}/getallusers`);
-          if (res.status !== 200) {
-            throw new Error('Could not get users');
-          }
-          data = await res.data?.users;
-        }
-        setAllUsers(data);
-      } catch (err) {
-        console.error({ err });
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchAllDietitians = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await axios.get(`${API_ENDPOINT}/getdiet`);
-        if (res.status !== 200) {
-          throw new Error('Could not retrieve data');
-        }
-
-        const data = await res.data;
-        setAllDieticians(data.dieticians);
-      } catch (err) {
-        console.error({ err });
-        setError('Something went wrong, try again');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllDietitians();
-    fetchAllUsers();
-    fetchMealsStat();
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    console.log('STARTING FILTER');
     try {
-      if (!selRange || selRange.toLowerCase() === 'all') {
-        const fUser = mealsStats?.filter((item) => {
-          if (selUserId) {
-            return item.userId === selUserId;
-          }
-          return item;
-        });
-        setFilterUserStats(fUser);
-      } else if (selRange.toLowerCase() === 'today') {
-        console.log('TODAY');
-        const todaysMealStats = mealsStats.filter((item) => {
-          const today = getFormattedDate(new Date());
-          const { date } = item;
-          if (selUserId) {
-            return date === today && item.userId === selUserId;
-          }
-          return date === today;
-        });
-        setFilterUserStats(todaysMealStats);
-      } else if (selRange.toLowerCase() === 'week') {
-        const week = mealsStats.filter((item) => {
-          const today = new Date();
-          const weekago = new Date(today.setDate(today.getDate() - 7));
-          const date = item?.date;
-          if (selUserId) {
-            return date >= weekago && item.userId === selUserId;
-          }
-          return date >= weekago;
-        });
-        setFilterUserStats(week);
-      } else if (selRange.toLowerCase() === 'month') {
-        const month = mealsStats.filter((item) => {
-          const today = new Date();
-          const monthago = new Date(today.setMonth(today.getMonth() - 1));
-          const date = item?.date;
-          if (selUserId) {
-            return date >= monthago && item.userId === selUserId;
-          }
-          return date >= monthago;
-        });
-        setFilterUserStats(month);
+      const queryParams = buildQueryParams();
+      const response = await api.get(`/all-meal-stats?${queryParams}`);
+      
+      if (response.status !== 200) {
+        throw new Error('Try again');
       }
+      
+      const {data} = response;
+      
+      setMealsStat(data.data);
+      setStatData(data.stats);
+      setPagination(data.pagination);
+      
     } catch (err) {
+      console.error({ err });
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [selUserId, selRange]);
+  }, [buildQueryParams, setMealsStat]);
 
-  useEffect(() => {
-    setLoading(true);
-
-    if (!selStatus) return;
-    if (selStatus === 'pending') {
-      const logs = mealsStats.filter((log) => {
-        if (selUserId) {
-          return log.finished === false && log.userId === selUserId;
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      let res;
+      let data;
+      if (userRole === 'dietician') {
+        res = await axios.get(`${API_ENDPOINT}/getclients?dieticianId=${id}`);
+        if (res.status !== 200) {
+          throw new Error('Could not get users');
         }
-
-        return log.finished === false;
-      });
-      setFilterUserStats(logs);
-    }
-    if (selStatus === 'finished') {
-      const logs = mealsStats.filter((log) => {
-        if (selUserId) {
-          return log.finished === true && log.userId === selUserId;
+        data = res.data?.clients?.user;
+      } else {
+        res = await axios.get(`${API_ENDPOINT}/getallusers`);
+        if (res.status !== 200) {
+          throw new Error('Could not get users');
         }
-        return log.finished === true;
-      });
-      setFilterUserStats(logs);
-    }
-    setLoading(false);
-  }, [selStatus]);
-  useEffect(() => {
-    setLoading(true);
-
-    console.log({ selDietitian });
-    if (!selDietitian) return;
-    const logs = mealsStats.filter((log) => {
-      if (selUserId) {
-        return log?.user?.dietician?.name === selDietitian && log.userId === selUserId;
+        data = res.data?.users;
       }
-      return log?.user?.dietician?.name === selDietitian;
-    });
-    setFilterUserStats(logs);
-    setLoading(false);
-  }, [selDietitian]);
+      setAllUsers(data);
+    } catch (err) {
+      console.error({ err });
+      setError(err.message);
+    }
+  }, [userRole, id, setAllUsers]);
+
+  const fetchAllDietitians = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_ENDPOINT}/getdiet`);
+      if (res.status !== 200) {
+        throw new Error('Could not retrieve data');
+      }
+      const {data} = res;
+      setAllDieticians(data.dieticians);
+    } catch (err) {
+      console.error({ err });
+      setError('Something went wrong, try again');
+    }
+  }, [setAllDieticians]);
+
+  // Initial data fetch
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchAllDietitians(),
+          fetchAllUsers(),
+        ]);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initializeData();
+  }, [fetchAllDietitians, fetchAllUsers]);
+
+  // Fetch meals data when filters or pagination change
+  useEffect(() => {
+    if (allDietitians.length > 0) { // Wait until dietitians are loaded
+      fetchMealsStat();
+    }
+  }, [fetchMealsStat, allDietitians.length]);
+
+  // Handle filter changes - reset to page 1
+  const handleFilterChange = useCallback((filterType, value) => {
+    setCurrentPage(1);
+    
+    switch (filterType) {
+      case 'user':
+        setSelUserID(value);
+        break;
+      case 'range':
+        setSelRange(value);
+        break;
+      case 'status':
+        setSelStatus(value);
+        break;
+      case 'dietitian':
+        setSelDietitian(value);
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  // Handle pagination change
+  const handleTableChange = (paginationInfo) => {
+    setCurrentPage(paginationInfo.current);
+    setPerPage(paginationInfo.pageSize);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSelUserID(null);
+    setSelRange(null);
+    setSelStatus(null);
+    setSelDietitian(null);
+    setCurrentPage(1);
+  };
 
   const columns = [
     {
       title: 'Meal',
-      dataIndex: 'meal',
+      dataIndex: ['meal', 'imgUrl'],
       key: 'meal',
-      render: (meal) => (
-        <div>
-          <img
-            src={
-              meal?.image ||
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D'
-            }
-            alt={meal?.name}
-            style={{ width: '50px', marginRight: '10px', borderRadius: '15px' }}
-          />
-          {meal?.name}
-        </div>
-      ),
+      render: (meal, record) => {
+        const imageUrl =
+          record?.imgUrl ||
+          record?.image ||
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D';
+  
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src={imageUrl}
+              alt={record?.meal?.name || 'Meal Image'}
+              style={{
+                width: '50px',
+                height: '50px',
+                marginRight: '10px',
+                borderRadius: '15px',
+                objectFit: 'cover',
+              }}
+            />
+            <span>{record?.meal?.name || 'N/A'}</span>
+          </div>
+        );
+      },
     },
     {
       title: 'User',
@@ -226,15 +240,14 @@ export default function AllMealStats() {
     },
     {
       title: 'Type',
-      dataIndex: ['mealTime'],
+      dataIndex: 'mealTime',
       key: 'mealTime',
     },
     {
       title: 'Status',
-      dataIndex: ['finished'],
+      dataIndex: 'finished',
       key: 'finished',
       render: (finished) => {
-        console.log({ finished });
         return finished ? (
           <div style={{ fontWeight: 'bold', color: 'green' }}>Finished</div>
         ) : (
@@ -244,12 +257,11 @@ export default function AllMealStats() {
     },
     {
       title: 'Assigned For',
-      dataIndex: ['date'],
+      dataIndex: 'date',
       key: 'date',
-      sorter: (a, b) => new Date(b.date) - new Date(a.date),
       render: (date) => {
         const day = new Date(date);
-        const options = { weekday: 'long' };
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
         return day.toLocaleDateString('en-IN', options);
       },
     },
@@ -263,16 +275,15 @@ export default function AllMealStats() {
     },
     {
       title: 'Quantity',
-      dataIndex: ['quantity'],
+      dataIndex: 'quantity',
       key: 'quantity',
     },
   ];
 
-  console.log({ mealsStats });
   return (
     <>
       {error && (
-        <Modal open={error} onOk={() => setError(null)} onCancel={() => setError(null)}>
+        <Modal open={!!error} onOk={() => setError(null)} onCancel={() => setError(null)}>
           <Card style={{ color: 'red' }}>
             <Typography>Oops</Typography>
             {error}
@@ -280,87 +291,108 @@ export default function AllMealStats() {
         </Modal>
       )}
       <div>
-        <MealsLog />
-        <PageHeader
+      <MealsLog stats={statData} loading={loading} />
+      <PageHeader
           className="header-boxed"
           ghost
           buttons={[
             <Select
+              key="user-select"
               showSearch
               placeholder="Select User"
               optionFilterProp="children"
               listHeight={160}
-              filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-              onSelect={(value) => {
-                if (!value) return;
-                console.log('user selected', value);
-                setSelUserID(value);
-              }}
+              value={selUserId}
+              allowClear
+              filterOption={(input, option) => 
+                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+              onSelect={(value) => handleFilterChange('user', value)}
+              onClear={() => handleFilterChange('user', null)}
             >
-              <Option value="" label="Select User">
-                Select User
-              </Option>
               {allUsers?.map((user) => (
-                <Option value={user.id}>{user.name}</Option>
+                <Option key={user.id} value={user.id}>{user.name}</Option>
               ))}
             </Select>,
             <Select
+              key="range-select"
               showSearch
               placeholder="Filter by range"
               optionFilterProp="children"
               listHeight={160}
-              filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-              onSelect={(value) => {
-                console.log('user selected range', value);
-
-                setSelRange(value);
-              }}
+              value={selRange}
+              allowClear
+              filterOption={(input, option) => 
+                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+              onSelect={(value) => handleFilterChange('range', value)}
+              onClear={() => handleFilterChange('range', null)}
             >
               <Option value="today">Today</Option>
               <Option value="week">Last Week</Option>
               <Option value="month">Last Month</Option>
+              <Option value="year">Last Year</Option>
               <Option value="all">All</Option>
             </Select>,
             <Select
+              key="status-select"
               showSearch
               placeholder="Filter by Status"
               optionFilterProp="children"
               listHeight={160}
-              filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-              onSelect={(value) => {
-                console.log('user selected status', value);
-
-                setSelStatus(value);
-              }}
+              value={selStatus}
+              allowClear
+              filterOption={(input, option) => 
+                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+              onSelect={(value) => handleFilterChange('status', value)}
+              onClear={() => handleFilterChange('status', null)}
             >
               <Option value="pending">Pending</Option>
               <Option value="finished">Finished</Option>
             </Select>,
+           ...(userRole !== 'dietician' ? [
             <Select
+              key="dietitian-select"
               showSearch
               placeholder="Filter by Dietitian"
               optionFilterProp="children"
               listHeight={160}
-              filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-              onSelect={(value) => {
-                console.log('user selected dietitian', value);
-                setSelDietitian(value);
-              }}
+              value={selDietitian}
+              allowClear
+              filterOption={(input, option) =>
+                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+              onSelect={(value) => handleFilterChange('dietitian', value)}
+              onClear={() => handleFilterChange('dietitian', null)}
             >
-              <Option>Select Dietitian</Option>
               {allDietitians.map((dietician) => (
-                <Option key={dietician.id} value={dietician?.name}>
-                  {dietician?.name}
+                <Option key={dietician.id} value={dietician.id}>
+                  {dietician.name}
                 </Option>
               ))}
-            </Select>,
+            </Select>
+          ] : []),
+            // eslint-disable-next-line react/button-has-type
+            <button 
+              key="clear-filters"
+              onClick={clearFilters}
+              style={{ 
+                padding: '4px 15px', 
+                backgroundColor: '#f0f0f0', 
+                border: '1px solid #d9d9d9',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Clear Filters
+            </button>
           ]}
         />
         <Main className="grid-boxed">
           <Row gutter={{ xs: 2, sm: 4, md: 8, lg: 12 }}>
             <Col span={24}>
-              <div className="table-bordered meal-update-table full-width-table table-responsive ">
-                {console.log({ filterUserStats })}
+              <div className="table-bordered meal-update-table full-width-table table-responsive">
                 {loading ? (
                   <Card bordered={false} style={{ padding: '2rem' }}>
                     <Skeleton active />
@@ -369,12 +401,19 @@ export default function AllMealStats() {
                 ) : (
                   <Table
                     columns={columns}
-                    dataSource={
-                      filterUserStats.length >= 1 || selUserId || selDietitian || selRange || selStatus
-                        ? filterUserStats
-                        : mealsStats
-                    }
-                    pagination={{ pageSize: 10 }}
+                    dataSource={mealsStats}
+                    pagination={{
+                      current: pagination.currentPage,
+                      pageSize: pagination.perPage,
+                      total: pagination.totalCount,
+                      showTotal: (total, range) => 
+                        `${range[0]}-${range[1]} of ${total} items`,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      pageSizeOptions: ['10', '20', '50', '100'],
+                    }}
+                    onChange={handleTableChange}
+                    rowKey={(record) => `${record.userId}-${record.mealId}-${record.date}`}
                   />
                 )}
               </div>
@@ -388,80 +427,44 @@ export default function AllMealStats() {
 
 export const FilterMealsOPtions = () => {};
 
-export const MealsLog = () => {
-  const [error, setError] = useState();
-  const [loading, setLoading] = useState(true);
-  const [statData, setStatData] = useState({
-    totalMeals: 0,
-    finishedMeals: 0,
-    notFinishedMeals: 0,
-  });
-  useEffect(() => {
-    setLoading(true);
-    const fetchStat = async () => {
-      try {
-        const res = await axios.get(`${API_ENDPOINT}/meal-stats`);
-        if (res.status !== 200) {
-          throw new Error('Could not find relevnat data');
-        }
-        const data = await res.data.data;
-        setStatData(data);
-      } catch (err) {
-        console.log({ err });
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStat();
-  }, []);
+// eslint-disable-next-line react/prop-types
+export const MealsLog = ({ stats, loading }) => {
   return (
-    <>
-      {error && (
-        <Modal open={error} onOk={() => setError(null)} onCancel={() => setError(null)}>
-          <Card style={{ color: 'red' }}>
-            <Typography>Oops</Typography>
-            {error}
+    <div className="flex justify-between item-center gap py-1 px-4 w-full" style={{ marginTop: '2rem' }}>
+      {loading ? (
+        <>
+          <Card className="w-full">
+            <Skeleton />
           </Card>
-        </Modal>
+          <Card className="w-full">
+            <Skeleton />
+          </Card>
+          <Card className="w-full">
+            <Skeleton />
+          </Card>
+        </>
+      ) : (
+        <>
+          <Card className="w-full">
+            <div className="flex justify-start item-center gap">
+              <p style={{ fontWeight: '700', color: 'blue', fontSize: '1rem' }}>Total Meals Assigned</p>
+              <p>{stats?.totalMeals || 0}</p>
+            </div>
+          </Card>
+          <Card className="w-full">
+            <div className="flex justify-start item-center gap">
+              <p style={{ fontWeight: '700', color: 'orange', fontSize: '1rem' }}>Pending Meals</p>
+              <p>{stats?.notFinishedMeals || 0}</p>
+            </div>
+          </Card>
+          <Card className="w-full">
+            <div className="flex justify-start item-center gap">
+              <p style={{ fontWeight: '700', color: 'green', fontSize: '1rem' }}>Finished Meals</p>
+              <p>{stats?.finishedMeals || 0}</p>
+            </div>
+          </Card>
+        </>
       )}
-      <div className="flex justify-between item-center gap py-1 px-4 w-full" style={{ marginTop: '2rem' }}>
-        {loading ? (
-          <>
-            <Card className="w-full ">
-              <Skeleton />
-            </Card>
-            <Card className="w-full ">
-              <Skeleton />
-            </Card>
-            <Card className="w-full ">
-              <Skeleton />
-            </Card>
-          </>
-        ) : (
-          <>
-            <Card className="w-full ">
-              <div className="flex justify-start item-center gap">
-                <p style={{ fontWeight: '700', color: 'blue', fontSize: '1rem' }}>Total Meals Assigned</p>{' '}
-                <p>{statData.totalMeals}</p>
-              </div>
-            </Card>
-            <Card className="w-full ">
-              <div className="flex justify-start item-center gap">
-                <p style={{ fontWeight: '700', color: 'orange ', fontSize: '1rem' }}>Pending Meals</p>{' '}
-                <p>{statData.notFinishedMeals}</p>
-              </div>
-            </Card>
-
-            <Card className="w-full ">
-              <div className="flex justify-start item-center gap">
-                <p style={{ fontWeight: '700', color: 'green', fontSize: '1rem' }}>Finshed Meals</p>{' '}
-                <p>{statData.finishedMeals}</p>
-              </div>
-            </Card>
-          </>
-        )}
-      </div>
-    </>
+    </div>
   );
 };

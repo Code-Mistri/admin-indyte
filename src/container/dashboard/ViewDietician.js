@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom/';
 import { Main } from '../styled';
 import { decryptData, getFormattedDate } from '../../utils/helper-functions';
 import { api } from '../../utils/axios-util';
+import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Meta } = Card;
 const { Paragraph } = Typography;
@@ -94,13 +95,7 @@ export default function ViewUser() {
                 <Row align="middle" gutter={24}>
                   <Col xs={24} md={8} align="">
                     <Card bordered={false} style={{ margin: 'auto 0' }}>
-                      <Avatar
-                        size={200}
-                        src={
-                          selectDietitian?.profile ||
-                          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
-                        }
-                      />
+                      <Avatar size={200} src={selectDietitian?.profile || DUMMY_PROFILE_URL} />
                     </Card>
                   </Col>
                   <Col xs={24} md={16}>
@@ -131,14 +126,7 @@ export default function ViewUser() {
                         <Card key={index} style={{ marginBottom: '10px' }}>
                           <Row gutter={16}>
                             <Col xs={8}>
-                              <Avatar
-                                size={128}
-                                className="w-full"
-                                src={
-                                  client?.profile ||
-                                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHVzZXJzfGVufDB8fDB8fHww'
-                                }
-                              />
+                              <Avatar size={128} className="w-full" src={client?.profile || DUMMY_PROFILE_URL} />
                             </Col>
                             <Col xs={12}>
                               <Paragraph>Name: {client.name}</Paragraph>

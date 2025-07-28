@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 export const capitalise = (str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
+export const capitalizeAllWords = (str) => {
+  if (!str) return '';
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 /**
  * returns the date in YY-MM-DD format

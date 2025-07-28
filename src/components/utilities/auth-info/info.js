@@ -1,42 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { LogOutIcon } from 'lucide-react';
-import { Avatar, Button } from 'antd';
+import React from 'react';
+import { Avatar } from 'antd';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import FeatherIcon from 'feather-icons-react';
-import { InfoWraper, NavAuth, UserDropDwon } from './auth-info-style';
-import Message from './message';
-import Notification from './notification';
-import Settings from './settings';
-import Support from './support';
+import { InfoWraper, UserDropDwon } from './auth-info-style';
 import { Popover } from '../../popup/popup';
-import { Dropdown } from '../../dropdown/dropdown';
 import { logOut } from '../../../redux/authentication/actionCreator';
 import { fbAuthLogout } from '../../../redux/firebase/auth/actionCreator';
 import Heading from '../../heading/heading';
-import { useUserInfo } from '../../../zustand/users-store';
-import { capitalise, decryptData } from '../../../utils/helper-functions';
+import { capitalise, capitalizeAllWords, decryptData } from '../../../utils/helper-functions';
+import { DUMMY_PROFILE_URL } from '../../../constant';
 
-function AuthInfo() {
+const AuthInfo = () => {
   const dispatch = useDispatch();
-  const { isAuthenticate, name, logo, role } = useSelector((state) => {
-    return {
-      isAuthenticate: state.fb.auth.uid,
-      name: state.auth.name,
-      logo: state.auth.logo,
-      role: state.auth.role,
-      company: state.auth.company,
-      email: state.auth.email,
-    };
-  });
-  const userRole = decryptData({ ciphertext: role, key: process.env.REACT_APP_COOKIE_SECRET });
 
-  const [state, setState] = useState({
-    flag: 'english',
+  // Redux state selectors
+  const { isAuthenticate, name, logo, role } = useSelector((state) => ({
+    isAuthenticate: state.fb.auth.uid,
+    name: state.auth.name,
+    logo: state.auth.logo,
+    role: state.auth.role,
+    company: state.auth.company,
+    email: state.auth.email,
+    user: state.auth,
+  }));
+  // Decrypt user role
+  const userRole = decryptData({
+    ciphertext: role,
+    key: process.env.REACT_APP_COOKIE_SECRET,
   });
-  const { flag } = state;
 
-  const SignOut = (e) => {
+  // Sign out handler
+  const handleSignOut = (e) => {
     e.preventDefault();
     if (isAuthenticate) {
       dispatch(fbAuthLogout(dispatch(logOut())));
@@ -45,103 +40,57 @@ function AuthInfo() {
     }
   };
 
-  const userContent = (
+  // User dropdown content
+  const userDropdownContent = (
     <UserDropDwon>
       <div className="user-dropdwon">
         <figure className="user-dropdwon__info">
-          <img src={logo} alt="" style={{ maxWidth: '44px', maxHeight: '44px', borderRadius: '999px' }} />
+          <img
+            src={logo || DUMMY_PROFILE_URL}
+            alt="User Avatar"
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #f0f0f0',
+            }}
+          />
           <figcaption>
-            <Heading as="h5">{name}</Heading>
+            <Heading className="capitalize" as="h5">{capitalizeAllWords(name)}</Heading>
             <p>{capitalise(userRole)}</p>
           </figcaption>
         </figure>
-        <Link to="/admin/my-profile">Profile</Link>
-        {/* <ul className="user-dropdwon__links">
-          <li>
-            <Link to="#">
-              <FeatherIcon icon="user" /> Profile
-            </Link>
-          </li>
-          <li>
-            <Link to="#">
-              <FeatherIcon icon="settings" /> Settings
-            </Link>
-          </li>
-          <li>
-            <Link to="#">
-              <FeatherIcon icon="dollar-sign" /> Billing
-            </Link>
-          </li>
-          <li>
-            <Link to="#">
-              <FeatherIcon icon="users" /> Activity
-            </Link>
-          </li>
-          <li>
-            <Link to="#">
-              <FeatherIcon icon="bell" /> Help
-            </Link>
-          </li>
-        </ul> */}
-        <Link className="user-dropdwon__bottomAction" onClick={SignOut} to="#">
+
+        <Link to="/admin/my-profile" className="profile-link">
+          Profile
+        </Link>
+
+        <Link className="user-dropdwon__bottomAction" onClick={handleSignOut} to="#">
           <FeatherIcon icon="log-out" /> Sign Out
         </Link>
       </div>
     </UserDropDwon>
   );
-
-  const onFlagChangeHandle = (value) => {
-    setState({
-      ...state,
-      flag: value,
-    });
-  };
-
-  const country = (
-    <NavAuth>
-      <Link onClick={() => onFlagChangeHandle('english')} to="#">
-        <img src={require('../../../static/img/flag/english.png')} alt="" />
-        <span>English</span>
-      </Link>
-      <Link onClick={() => onFlagChangeHandle('germany')} to="#">
-        <img src={require('../../../static/img/flag/germany.png')} alt="" />
-        <span>Germany</span>
-      </Link>
-      <Link onClick={() => onFlagChangeHandle('spain')} to="#">
-        <img src={require('../../../static/img/flag/spain.png')} alt="" />
-        <span>Spain</span>
-      </Link>
-      <Link onClick={() => onFlagChangeHandle('turky')} to="#">
-        <img src={require('../../../static/img/flag/turky.png')} alt="" />
-        <span>Turky</span>
-      </Link>
-    </NavAuth>
-  );
-
   return (
     <InfoWraper>
-      {/* <Message />
-      <Notification />
-
-      <Settings />
-      <Support /> */}
-      {/* <div className="nav-author">
-        <Dropdown placement="bottomRight" content={country} trigger="click">
-          <Link to="#" className="head-example">
-            <img src={require(`../../../static/img/flag/${flag}.png`)} alt="" />
-          </Link>
-        </Dropdown>
-      </div> */}
-
+      {/* User Profile Dropdown */}
       <div className="nav-author">
-        <Popover placement="bottomRight" content={userContent} action="click">
+        <Popover placement="bottomRight" content={userDropdownContent} action="click">
           <Link to="#" className="head-example">
-            <Avatar src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png" />
+            <Avatar
+              src={logo || DUMMY_PROFILE_URL}
+              size={40}
+              style={{
+                cursor: 'pointer',
+                border: '2px solid #f0f0f0',
+              }}
+            />
           </Link>
         </Popover>
       </div>
     </InfoWraper>
   );
-}
+};
 
 export default AuthInfo;

@@ -7,6 +7,7 @@ import { Main, TableWrapper } from '../styled';
 import { UserTableStyleWrapper } from '../pages/style';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { useSeletedUser } from '../../zustand/users-store';
+import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Option } = Select;
 export default function Users() {
@@ -48,14 +49,7 @@ export default function Users() {
         const user = allUsers.find((item) => item?.id === id);
         return (
           <div className="flex justify-start item-center gap-less">
-            <Avatar
-              size={48}
-              src={
-                user?.profile ||
-                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D'
-              }
-              alt={user?.name}
-            />
+            <Avatar size={48} src={user?.profile || DUMMY_PROFILE_URL} alt={user?.name} />
             {user?.name}
           </div>
         );

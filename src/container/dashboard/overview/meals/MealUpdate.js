@@ -70,22 +70,31 @@ const MealUpdate = () => {
   const columns = [
     {
       title: 'Meal',
-      dataIndex: 'meal',
+      dataIndex: ['meal', 'imgUrl'],
       key: 'meal',
-      render: (meal) => (
-        <div>
-          <Avatar
-            src={
-              meal?.image ||
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D'
-            }
-            alt={meal?.name}
-            size={44}
-            style={{ marginRight: '10px' }}
-          />
-          {meal?.name}
-        </div>
-      ),
+      render: (meal, record) => {
+        const imageUrl =
+          record?.imgUrl ||
+          record?.image ||
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D';
+  
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src={imageUrl}
+              alt={record?.meal?.name || 'Meal Image'}
+              style={{
+                width: '50px',
+                height: '50px',
+                marginRight: '10px',
+                borderRadius: '15px',
+                objectFit: 'cover',
+              }}
+            />
+            <span>{record?.meal?.name || 'N/A'}</span>
+          </div>
+        );
+      },
     },
     {
       title: 'Type',

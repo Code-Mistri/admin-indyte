@@ -31,11 +31,7 @@ const ProviderConfig = () => {
       logo: state.auth.logo,
     };
   });
-  console.log({ name, logo });
   const userRole = decryptData({ ciphertext: role, key: process.env.REACT_APP_COOKIE_SECRET });
-
-  console.log({ userRole });
-  console.log({ isLoggedIn, role });
 
   const [path, setPath] = useState(window.location.pathname);
 
