@@ -19,7 +19,6 @@ export default function AllWorkouts() {
     const fetchAllMeals = async () => {
       try {
         const response = await axios.get(`${API_ENDPOINT}/getallworkout`);
-        console.log({ response });
         if (response.status !== 200) {
           setError('Failed to get meals');
           return;
@@ -36,7 +35,6 @@ export default function AllWorkouts() {
 
     fetchAllMeals();
   }, []);
-  console.log({ workouts });
   return (
     <div>
       {error && (
@@ -62,7 +60,6 @@ export default function AllWorkouts() {
                 (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
               }
               onSelect={(value) => {
-                console.log({ value });
                 const selMeal = workouts?.find((item) => item.id === value);
                 setWorkout(selMeal);
               }}

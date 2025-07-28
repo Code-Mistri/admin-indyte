@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom/';
 import { Main } from '../styled';
 import { decryptData, getFormattedDate } from '../../utils/helper-functions';
 import { api } from '../../utils/axios-util';
+import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Meta } = Card;
 const { Paragraph } = Typography;
@@ -94,13 +95,7 @@ export default function ViewUser() {
                 <Row align="middle" gutter={24}>
                   <Col xs={24} md={8} align="">
                     <Card bordered={false} style={{ margin: 'auto 0' }}>
-                      <Avatar
-                        size={200}
-                        src={
-                          selectDietitian?.profile ||
-                          'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
-                        }
-                      />
+                      <Avatar size={200} src={selectDietitian?.profile || DUMMY_PROFILE_URL} />
                     </Card>
                   </Col>
                   <Col xs={24} md={16}>
@@ -131,13 +126,7 @@ export default function ViewUser() {
                         <Card key={index} style={{ marginBottom: '10px' }}>
                           <Row gutter={16}>
                             <Col xs={8}>
-                              <Avatar
-                                size={128}
-                                className="w-full"
-                                src={
-                                  client?.profile ||
-'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'                                }
-                              />
+                              <Avatar size={128} className="w-full" src={client?.profile || DUMMY_PROFILE_URL} />
                             </Col>
                             <Col xs={12}>
                               <Paragraph>Name: {client.name}</Paragraph>

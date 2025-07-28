@@ -6,6 +6,7 @@ const actions = {
   LOGOUT_BEGIN: 'LOGOUT_BEGIN',
   LOGOUT_SUCCESS: 'LOGOUT_SUCCESS',
   LOGOUT_ERR: 'LOGOUT_ERR',
+  UPDATE_LOGO : 'UPDATE_LOGO',
 
   loginBegin: () => {
     return {
@@ -36,6 +37,12 @@ const actions = {
   logoutSuccess: (data) => {
     return {
       type: actions.LOGOUT_SUCCESS,
+      data,
+    };
+  },
+  updateLogo: (data) => {
+    return {
+      type: actions.UPDATE_LOGO,
       data,
     };
   },

@@ -22,12 +22,7 @@ const UserWorkoutTable = () => {
 
   const hanldeRemove = async (workout) => {
     setDelLoading({ workoutId: workout.workoutId, pending: true });
-    console.log({ workout, userWorkouts });
-    console.log({
-      userId: workout.userId,
-      workoutId: workout.workoutId,
-      date: workout.date,
-    });
+    
     try {
       const res = await axios.delete(`${API_ENDPOINT}/unassign-workout`, {
         userId: workout.userId,

@@ -7,6 +7,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { Cards } from '../../components/cards/frame/cards-frame';
 import { Main, BasicFormWrapper } from '../styled';
 import { API_ENDPOINT } from '../../utils/endpoints';
+import { api } from '../../utils/axios-util';
 
 const { Option } = Select;
 const MealForm = () => {
@@ -56,7 +57,7 @@ const MealForm = () => {
       formData.append('steps', JSON.stringify(steps.map(s => s.text)));
       formData.append('nutritions', JSON.stringify(nutritions));
       formData.append('image', imageFile);
-      const res = await axios.post(`${API_ENDPOINT}/meal`, formData, {
+      const res = await api.post(`/meal`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (res.status !== 200) {
@@ -71,7 +72,9 @@ const MealForm = () => {
       setIngredients([{ text: '' }]);
       setNutritions([{ type: '', value: '' }]);
     } catch (err) {
-      setError(err.message);
+      console.log(err)
+      const errorMessage = err?.response?.data?.errors?.meal || err?.message
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

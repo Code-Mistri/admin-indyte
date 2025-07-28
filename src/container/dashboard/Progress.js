@@ -85,10 +85,8 @@ export default function WaterProgress() {
 
         let res;
         let data;
-        console.log({ mypage: userRole });
         if (userRole === 'dietician') {
           res = await axios.get(`${API_ENDPOINT}/getclients?dieticianId=${userId}`);
-          console.log({ res });
           if (res.status !== 200) {
             throw new Error('Could not get users');
           }
@@ -124,31 +122,27 @@ export default function WaterProgress() {
         let data;
         if (reportBasis === 'weekly') {
           res = await axios.get(`${API_ENDPOINT}/getlastweekwaterprogress?userId=${selectedUser?.id}`);
-          if (res.status === 404) {
-            throw new Error('Ahh! user does not have water progress data for last week');
-          }
+          // if (res.status === 404) {
+          //   throw new Error('Ahh! user does not have water progress data for last week');
+          // }
           data = await res.data?.data;
         } else if (reportBasis === 'monthly') {
-          console.log('LAST MONTH');
           res = await axios.get(`${API_ENDPOINT}/getlastmonthwaterprogress?userId=${selectedUser?.id}`);
-          if (res.status === 404) {
-            throw new Error('Ahh! user does not have water progress data for this month');
-          }
-          console.log({ lastwater: res });
+          // if (res.status === 404) {
+          //   throw new Error('Ahh! user does not have water progress data for this month');
+          // }
           data = await res.data?.data;
         } else {
           res = await axios.get(`${API_ENDPOINT}/water-logs/${selectedUser?.id}/${date}`);
           data = await res.data;
-          if (res.status === 404) {
-            throw new Error('Ahh! user does not have water any progress data for today');
-          }
+          // if (res.status === 404) {
+          //   throw new Error('Ahh! user does not have water any progress data for today');
+          // }
         }
-        console.log({ water: res });
         if (res.status !== 200 && res.status !== 404) {
           throw new Error('Request error');
         }
         setUserWaterIntake(data);
-        console.log({ data });
         return res;
       } catch (err) {
         console.error({ err });
@@ -166,32 +160,27 @@ export default function WaterProgress() {
         let data;
         if (reportBasis === 'weekly') {
           res = await axios.get(`${API_ENDPOINT}/getlastweeksleepprogress?userId=${selectedUser?.id}`);
-          console.log({ water1: res });
           if (res.status === 404) {
             throw new Error('Ahh! user does not have sleep progress data for last week');
           }
           data = await res.data?.data;
         } else if (reportBasis === 'monthly') {
           res = await axios.get(`${API_ENDPOINT}/getlastmonthsleepprogress?userId=${selectedUser?.id}`);
-          console.log({ water2: res });
           if (res.status === 404) {
             throw new Error('Ahh! user does not have sleep progress data for last month');
           }
           data = await res.data?.data;
         } else {
           const res = await axios.get(`${API_ENDPOINT}/sleep-logs/${selectedUser?.id}/${date}`);
-          console.log({ water3: res });
           if (res.status === 404) {
             throw new Error('Ahh! user does not have water progress data for today');
           }
           data = await res.data;
         }
-        console.log({ sleep: res });
         if (res.status !== 200 && res.status !== 404) {
           throw new Error('Request error');
         }
         setUserSleepLog(data);
-        console.log({ sleep: data });
         return data;
       } catch (err) {
         console.error({ err });
@@ -206,13 +195,11 @@ export default function WaterProgress() {
       const date = getFormattedDate(new Date());
       try {
         const res = await axios.get(`${API_ENDPOINT}/steps-logs/${selectedUser?.id}/${date}`);
-        console.log({ res });
         if (res.status !== 200 && res.status !== 404) {
           throw new Error('Request error');
         }
         const data = await res.data;
         setUserStepsLog(data);
-        console.log({ steps: data });
       } catch (err) {
         console.error({ err });
         // setError(err.message);
@@ -238,7 +225,6 @@ export default function WaterProgress() {
         }
         const data = await res.data.data;
         setUserCaloriesIntake(data);
-        console.log({ data });
       } catch (err) {
         console.error({ err });
         // setError(err.message);
@@ -246,49 +232,40 @@ export default function WaterProgress() {
         setCalLoading(false);
       }
     }
-    async function getWorkoutLogs() {
-      const date = getFormattedDate(new Date());
-      setWorkoutLoading(true);
-      try {
-        const res = await api.get(
-          `getuserworkoutprogress/${selectedUser?.id}?date=${reportBasis === 'daily' ? date : reportBasis}`,
-        );
-        console.log('Its not working work');
-        console.log({ workoutres: res });
-        if (res.status === 404 || res.status === 400) {
-          throw new Error(
-            `Ahh! user does not have workout progress data for ${reportBasis === 'daily' ? 'today' : reportBasis}`,
-          );
-        }
-        if (res.status !== 200 && res.status !== 404) {
-          throw new Error('Request error');
-        }
-        const data = await res.data.data;
-        setWorkoutlogs(data);
-        console.log({ workout: data });
-        return data;
-      } catch (err) {
-        console.error({ workouterr: err });
-        setError(err.message);
-      } finally {
-        setWorkoutLoading(false);
-      }
-    }
+    // async function getWorkoutLogs() {
+    //   const date = getFormattedDate(new Date());
+    //   setWorkoutLoading(true);
+    //   try {
+    //     const res = await api.get(
+    //       `getuserworkoutprogress/${selectedUser?.id}?date=${reportBasis === 'daily' ? date : reportBasis}`,
+    //     );
+    //     console.log('Its not working work');
+    //     console.log({ workoutres: res });
+    //     if (res.status === 404 || res.status === 400) {
+    //       throw new Error(
+    //         `Ahh! user does not have workout progress data for ${reportBasis === 'daily' ? 'today' : reportBasis}`,
+    //       );
+    //     }
+    //     if (res.status !== 200 && res.status !== 404) {
+    //       throw new Error('Request error');
+    //     }
+    //     const data = await res.data.data;
+    //     setWorkoutlogs(data);
+    //     console.log({ workout: data });
+    //     return data;
+    //   } catch (err) {
+    //     console.error({ workouterr: err });
+    //     setError(err.message);
+    //   } finally {
+    //     setWorkoutLoading(false);
+    //   }
+    // }
     fetchUserWaterIntake().then((wtaerrr) => console.log('water fetched', { wtaerrr }));
     fetchUserSleepIntake().then((data) => console.log({ sleepD: data }));
     // fetchUserStepsLog();
-    fetchUserCaloriesIntake();
-    getWorkoutLogs().then(() => console.log('workout fetcjed'));
+    // fetchUserCaloriesIntake();
+    // getWorkoutLogs().then(() => console.log('workout fetcjed'));
   }, [selectedUser, reportBasis]);
-
-  console.log(
-    '=====',
-    { userCaloriesIntake },
-    { userSleepLog },
-    { userWaterIntake },
-    { selectedUser },
-    { userWorkoutlogs },
-  );
   return (
     <>
       {error && selectedUser && (
@@ -374,7 +351,6 @@ export default function WaterProgress() {
               optionFilterProp="children"
               onChange={(item) => {
                 setReportBasis(item);
-                console.log({ item, reportBasis });
               }}
               filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
             >
@@ -709,7 +685,6 @@ export default function WaterProgress() {
 }
 
 const WaterIntakeProgress = ({ target, consumed, shape }) => {
-  console.log({ consumed });
   const percent = ((consumed / target) * 100) / 100;
   return (
     <Liquid

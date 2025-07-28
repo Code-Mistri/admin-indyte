@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom/';
 import { Main } from '../styled';
 import { decryptData, getFormattedDate } from '../../utils/helper-functions';
 import { api } from '../../utils/axios-util';
+import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Meta } = Card;
 
@@ -108,13 +109,7 @@ export default function ViewUser() {
                 ]}
               >
                 <div className="profile-picture-container">
-                  <Avatar
-                    size={128}
-                    src={
-                      user?.profile ||
-                      'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'
-                    }
-                  />
+                  <Avatar size={128} src={user?.profile || DUMMY_PROFILE_URL} />
                 </div>
                 <div className="flex-center w-fit my-1">
                   <Meta title={user?.name} className="mb" />

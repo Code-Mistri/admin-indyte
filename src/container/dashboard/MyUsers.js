@@ -10,6 +10,7 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 import { useSeletedUser } from '../../zustand/users-store';
 import { api } from '../../utils/axios-util';
 import { decryptData } from '../../utils/helper-functions';
+import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Option } = Select;
 export default function Users() {
@@ -59,13 +60,7 @@ export default function Users() {
         const user = allUsers.find((item) => item?.id === id);
         return (
           <div className="flex justify-start item-center gap-less">
-            <Avatar
-              size={48}
-              src={
-                user?.profile ||
-'https://www.webert.it/wp-content/uploads/2016/08/dummy-prod-1.jpg'              }
-              alt={user?.name}
-            />
+            <Avatar size={48} src={user?.profile || DUMMY_PROFILE_URL} alt={user?.name} />
             {user?.name}
           </div>
         );

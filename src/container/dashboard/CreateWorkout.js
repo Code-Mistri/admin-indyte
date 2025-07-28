@@ -60,19 +60,16 @@ const MealForm = () => {
   const [exersices, setAllExersices] = useState([]);
   const pageState = location.state || {};
   if (pageState.state && !success) {
-    console.log({ pageState });
     form.setFieldsValue(pageState.state);
   }
 
   const onFinish = async () => {
     setBtnLoading(true);
     const values = form.getFieldsValue();
-    console.log({ values });
     try {
       if (!values || !values?.name || !values?.exercises || !values?.description) {
         throw new Error('Invalid Data');
       }
-      console.log({ values });
       const res = await axios.post(`${API_ENDPOINT}/createworkout`, {
         ...values,
       });
@@ -96,7 +93,6 @@ const MealForm = () => {
         const data = await res.data.data;
         setAllExersices(data);
 
-        console.log({ data });
       } catch (err) {
         console.error({ err });
         setError(err.message);
@@ -106,7 +102,6 @@ const MealForm = () => {
     }
     fetchAllExersices();
   }, []);
-  console.log({ exersices });
 
   return (
     <>

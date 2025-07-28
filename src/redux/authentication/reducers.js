@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie';
 import actions from './actions';
 
-const { LOGIN_BEGIN, LOGIN_SUCCESS, LOGIN_ERR, LOGOUT_BEGIN, LOGOUT_SUCCESS, LOGOUT_ERR } = actions;
+const { LOGIN_BEGIN, LOGIN_SUCCESS, LOGIN_ERR, LOGOUT_BEGIN, LOGOUT_SUCCESS, LOGOUT_ERR, UPDATE_LOGO } = actions;
 
 const initState = {
   role: Cookies.get('role'),
@@ -22,7 +22,7 @@ const initState = {
  */
 const AuthReducer = (state = initState, action) => {
   const { type, data, err } = action;
-  console.log({ action, state });
+  console.log({ action, state }, action?.data?.logo,action);
   switch (type) {
     case LOGIN_BEGIN:
       return {
@@ -58,6 +58,11 @@ const AuthReducer = (state = initState, action) => {
         ...state,
         login: data,
         loading: false,
+      };
+    case UPDATE_LOGO:
+      return {
+        ...state,
+        logo: action?.data?.logo,
       };
     case LOGOUT_ERR:
       return {

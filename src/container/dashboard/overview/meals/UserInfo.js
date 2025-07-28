@@ -9,6 +9,7 @@ import {
 } from '../../../../zustand/users-store';
 import { API_ENDPOINT } from '../../../../utils/endpoints';
 import { api } from '../../../../utils/axios-util';
+import { DUMMY_PROFILE_URL } from '../../../../constant';
 
 const { Meta } = Card;
 export default function UserInfo({ page, userDiticianName }) {
@@ -81,7 +82,7 @@ export default function UserInfo({ page, userDiticianName }) {
           <Avatar
             src={
               (page === 'meals' ? selectedUserForMeal?.profile : selectedUserForWorkout.profile) ||
-              'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1780&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+             DUMMY_PROFILE_URL
             }
             size={128}
             style={{ margin: 'auto ' }}
