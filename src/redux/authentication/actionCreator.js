@@ -1,112 +1,66 @@
-import axios from 'axios';
-import { CometChatUIKit } from '@cometchat/chat-uikit-react';
-import { CometChat } from '@cometchat/chat-sdk-javascript';
-import Cookies from 'js-cookie';
 import actions from './actions';
-import { API_ENDPOINT } from '../../utils/endpoints';
-import { encryptData } from '../../utils/helper-functions';
-import { useUserInfo } from '../../zustand/users-store';
+import { AuthApiService } from '../../services/authApiService';
 
-const handleCreateChatUser = async ({ userId, username }) => {
-  const user = new CometChat.User(userId);
-  user.setName(username);
-  console.log('USER:', user);
-
-  const response = await CometChatUIKit.createUser(user);
-  console.log({ response });
-};
 const { loginBegin, loginSuccess, loginErr, logoutBegin, logoutSuccess, logoutErr } = actions;
 
+/**
+ * Login action creator
+ * @param {Object} credentials - Login credentials
+ * @param {string} credentials.email - User email
+ * @param {string} credentials.password - User password
+ * @param {string} credentials.user - User role (admin/dietitian)
+ * @returns {Function} Redux thunk function
+ */
 const login = ({ email, password, user }) => {
-  // const { setUserInfo } = useUserInfo();
   return async (dispatch) => {
     try {
       dispatch(loginBegin());
-      let response;
-      if (user === 'admin') {
-        response = await axios.post(`${API_ENDPOINT}/admin/login`, {
-          password,
-          email,
-        });
-      } else if (user === 'dietitian') {
-        response = await axios.post(`${API_ENDPOINT}/dietician/login`, {
-          password,
-          email,
-        });
-      } else {
-        throw new Error('Not Allowed');
+
+      // Use the common API service
+      const result = await AuthApiService.login({
+        email,
+        password,
+        userRole: user,
+      });
+
+      if (result.success) {
+        return dispatch(loginSuccess(result.data));
       }
-      console.log({ responseLogin: response });
-      if (response.data?.access_token) {
-        // setUserInfo(await response.data);
-        const accessToken = await response.data?.access_token;
-        const userRole = await response.data?.role;
-        const userId = await response.data?.id;
-        const logo = user === 'admin' ? await response.data?.logo : await response.data.profile;
-        const username = await response.data?.username;
-        const name = await response.data?.name;
-        const phone = await response.data?.phone;
-        const email = await response.data?.email;
-        const company = await response.data?.company;
+      throw new Error('Login failed');
+    } catch (error) {
+      console.error('Login action error:', error);
 
-        console.log('here', { userRole });
-        const role = await encryptData({ data: userRole, key: process.env.REACT_APP_COOKIE_SECRET });
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.setDate() + 7);
-        console.log('settigncoolies');
+      // Return error in the expected format for the component
+      const errorResponse = {
+        err: {
+          errors: {
+            general: error.message,
+          },
+          message: error.message,
+        },
+      };
 
-        // await handleCreateChatUser({ userId, username: name });
-
-        if (response.status === 400) {
-          throw new Error('Invalid Credentials');
-        } else if (response.status !== 200) {
-          throw new Error('Something went wrong');
-        }
-        Cookies.set('access_token', accessToken, { secure: true, sameSite: true, expires: expirationDate });
-
-        Cookies.set('logedIn', true, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('role', role, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('userid', userId, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('name', name, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('logo', logo, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('username', username, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('phone', phone, { secure: true, sameSite: true, expires: expirationDate });
-        Cookies.set('email', email, { secure: true, sameSite: true, expires: expirationDate });
-        console.log('starting dispatch');
-
-        return dispatch(
-          loginSuccess({
-            isLoggedIn: true,
-            role,
-            name,
-            logo,
-            id: userId,
-            username,
-            phone,
-            email,
-          }),
-        );
-      }
-    } catch (err) {
-      console.error({ errrrr: err });
-      return dispatch(loginErr(err?.response ? err.response?.data : err));
+      return dispatch(loginErr(errorResponse));
     }
   };
 };
 
+/**
+ * Logout action creator
+ * @returns {Function} Redux thunk function
+ */
 const logOut = () => {
-  // const { setUserInfo } = useUserInfo();
-
   return async (dispatch) => {
     try {
       dispatch(logoutBegin());
-      Cookies.remove('logedIn');
-      Cookies.remove('access_token');
-      Cookies.remove('role');
-      // setUserInfo(null);
+
+      // Use the common API service
+      await AuthApiService.logout();
+
       dispatch(logoutSuccess(null));
-    } catch (err) {
-      dispatch(logoutErr(err));
+    } catch (error) {
+      console.error('Logout action error:', error);
+      dispatch(logoutErr(error));
     }
   };
 };

@@ -356,19 +356,15 @@ function MenuItems({ darkMode, toggleCollapsed, topMenu }) {
         <SubMenu key="dietitian" icon={!topMenu && <HeartPulseIcon style={{ color: '#b6bcd6' }} />} title="Dietitian">
           <Menu.Item key="add-dietitian">
             <NavLink onClick={toggleCollapsed} to={`${path}/add-dietitian/`}>
-              Add Dietician
+              Add Dietitian
             </NavLink>
           </Menu.Item>
           <Menu.Item key="dietitian-table">
             <NavLink onClick={toggleCollapsed} to={`${path}/dietitians`}>
-              All Dieticians
+              All Dietitians
             </NavLink>
           </Menu.Item>
-          <Menu.Item key="dietitian-logs">
-            <NavLink onClick={toggleCollapsed} to={`${path}/dietitian-logs`}>
-              Dietician Logs
-            </NavLink>
-          </Menu.Item>
+          
         </SubMenu>
         {/* <Menu.Item
           icon={
@@ -577,7 +573,7 @@ function MenuItems({ darkMode, toggleCollapsed, topMenu }) {
           </NavLink>
         </Menu.Item> */}
 
-        {!topMenu && <NavTitle className="sidebar-nav-title">Features</NavTitle>}
+        {/* {!topMenu && <NavTitle className="sidebar-nav-title">Features</NavTitle>} */}
 
         {/* <SubMenu key="components" icon={!topMenu && <FeatherIcon icon="layers" />} title="UI Elements">
         <Menu.Item key="alerts">
@@ -814,61 +810,7 @@ function MenuItems({ darkMode, toggleCollapsed, topMenu }) {
           </NavLink>
         </Menu.Item>
       </SubMenu> */}
-        <SubMenu key="charts" icon={!topMenu && <FeatherIcon icon="bar-chart-2" />} title="Charts">
-          <Menu.Item key="chartjs">
-            <NavLink onClick={toggleCollapsed} to={`${path}/charts/chartjs`}>
-              Chart Js
-            </NavLink>
-          </Menu.Item>
-          <Menu.Item key="google-chart">
-            <NavLink onClick={toggleCollapsed} to={`${path}/charts/google-chart`}>
-              Google Charts
-            </NavLink>
-          </Menu.Item>
-
-          <SubMenu key="recharts" icon={!topMenu && <FeatherIcon icon="bar-chart" />} title="Recharts">
-            <Menu.Item key="bar">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/bar`}>
-                Bar Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="area">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/area`}>
-                Area Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="composed">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/composed`}>
-                Composed Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="line">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/line`}>
-                Line Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="pie">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/pie`}>
-                Pie Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="radar">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/radar`}>
-                Radar Charts
-              </NavLink>
-            </Menu.Item>
-            <Menu.Item key="radial">
-              <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/radial`}>
-                Radial Charts
-              </NavLink>
-            </Menu.Item>
-          </SubMenu>
-          <Menu.Item key="peity">
-            <NavLink onClick={toggleCollapsed} to={`${path}/charts/peity`}>
-              Peity Charts
-            </NavLink>
-          </Menu.Item>
-        </SubMenu>
+     
         {/* <SubMenu
         key="forms"
         icon={!topMenu && <FeatherIcon icon="disc" />}

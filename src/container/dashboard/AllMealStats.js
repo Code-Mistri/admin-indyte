@@ -2,9 +2,11 @@
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { Card, Col, Modal, Row, Select, Skeleton, Table, Typography } from 'antd';
+import { Card, Col, Modal, Row, Select, Skeleton, Table, Typography, Button } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
 import SearchUser from './overview/meals/SearchUser';
+import MealDetailsModal from './MealDetailsModal'; // Import the new modal component
 import { Main } from '../styled';
 import { Cards } from '../../components/cards/frame/cards-frame';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -42,6 +44,10 @@ export default function AllMealStats() {
     finishedMeals: 0,
     notFinishedMeals: 0,
   });
+
+  // Modal states
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [mealDetailsVisible, setMealDetailsVisible] = useState(false);
 
   // filters
   const [selUserId, setSelUserID] = useState();
@@ -204,6 +210,17 @@ export default function AllMealStats() {
     setCurrentPage(1);
   };
 
+  // Handle meal details modal
+  const handleShowMealDetails = (record) => {
+    setSelectedMeal(record);
+    setMealDetailsVisible(true);
+  };
+
+  const handleCloseMealDetails = () => {
+    setMealDetailsVisible(false);
+    setSelectedMeal(null);
+  };
+
   const columns = [
     {
       title: 'Meal',
@@ -277,6 +294,26 @@ export default function AllMealStats() {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
+    },
+    {
+      title: 'Details',
+      key: 'details',
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<InfoCircleOutlined />}
+          onClick={() => handleShowMealDetails(record)}
+          style={{ 
+            color: '#1890ff',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '4px 8px'
+          }}
+          title="View meal details"
+        >
+          Details
+        </Button>
+      ),
     },
   ];
 
@@ -420,6 +457,13 @@ export default function AllMealStats() {
             </Col>
           </Row>
         </Main>
+
+        {/* Meal Details Modal */}
+        <MealDetailsModal
+          visible={mealDetailsVisible}
+          onClose={handleCloseMealDetails}
+          mealData={selectedMeal}
+        />
       </div>
     </>
   );
