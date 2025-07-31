@@ -45,7 +45,7 @@ function Dashboard() {
                 </Cards>
               }
             >
-              <Sales />
+              {/* <Sales /> */}
             </Suspense>
           </Col>
 

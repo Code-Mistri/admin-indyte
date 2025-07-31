@@ -122,6 +122,7 @@ const useClientActions = () => {
       });
       if (res.status === 200) {
         message.success('Clients assigned successfully');
+        fetchNewUsers()
         return true;
       }
     } catch (err) {

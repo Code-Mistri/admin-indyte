@@ -147,10 +147,10 @@ export default function DieticianForm() {
       } catch (err) {
         console.error('Chat user creation failed:', err);
         // Don't throw here - dietician was created successfully
-        message.warning('Dietician registered successfully, but chat setup failed. Contact admin.');
+        message.warning('Dietitian registered successfully, but chat setup failed. Contact admin.');
       }
 
-      message.success('Dietician registered successfully!');
+      message.success('Dietitian registered successfully!');
 
       // Clean up and redirect
       handleRemoveImage();
@@ -359,7 +359,7 @@ export default function DieticianForm() {
 
                   <Form.Item>
                     <Button type="primary" htmlType="submit" loading={loading} disabled={loading} block size="large">
-                      {loading ? 'Registering...' : 'Register Dietician'}
+                      {loading ? 'Registering...' : 'Register Dietitian'}
                     </Button>
                   </Form.Item>
                 </Form>
