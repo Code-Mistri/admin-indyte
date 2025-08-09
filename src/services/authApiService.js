@@ -178,11 +178,14 @@ class AuthApiService {
       if (!responseData?.access_token) {
         throw new Error('Invalid response from server');
       }
-
+      const encryptedRole = encryptData({ 
+        data: responseData.role, 
+        key: process.env.REACT_APP_COOKIE_SECRET 
+      });
       // Extract user data from response
       const userData = {
         accessToken: responseData.access_token,
-        userRole: responseData.role,
+        userRole: encryptedRole,
         userId: responseData.id,
         logo: userRole === USER_ROLES.ADMIN ? responseData.logo : responseData.profile,
         username: responseData.username,
