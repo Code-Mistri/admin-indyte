@@ -82,15 +82,16 @@ const setCookies = (userData) => {
   } = userData;
 
   try {
-    const encryptedRole = encryptData({ 
-      data: role, 
-      key: process.env.REACT_APP_COOKIE_SECRET 
-    });
+    // const encryptedRole = encryptData({ 
+    //   data: role, 
+    //   key: process.env.REACT_APP_COOKIE_SECRET 
+    // });
 
+    console.log(role)
     const cookiesToSet = [
       ['access_token', accessToken],
       ['logedIn', true],
-      ['role', encryptedRole],
+      ['role', role],
       ['userid', userId],
       ['name', name],
       ['logo', logo],
