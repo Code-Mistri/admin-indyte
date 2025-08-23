@@ -74,17 +74,13 @@ function SignIn() {
   useEffect(() => {
     const host = window.location.hostname;
     const sub = host.split('.')[0];
-    console.log('🔍 Current Host:', host);
-    console.log('🔍 Extracted Subdomain:', sub);
+
 
     if (sub === 'admin') {
-      console.log('✅ Role Detected: ADMIN');
       setRole(USER_ROLES.ADMIN);
     } else if (sub === 'dietician' || sub === 'dietitian') {
-      console.log('✅ Role Detected: DIETITIAN');
       setRole(USER_ROLES.DIETITIAN);
     } else {
-      console.log('⚠️ No specific subdomain found → default DIETITIAN');
       setRole(USER_ROLES.DIETITIAN); // default fallback
     }
   }, []);
@@ -113,10 +109,9 @@ function SignIn() {
   );
 
   // Main login handler
-  
+
   const handleSubmit = useCallback(
     async (userRole) => {
-      console.log(' Login attempt started for role:', userRole);
 
       // Validate user role
       if (!Object.values(USER_ROLES).includes(userRole)) {
@@ -289,7 +284,7 @@ function SignIn() {
                   {role === USER_ROLES.ADMIN ? 'Sign In as Admin' : 'Sign In as Dietitian'}
                 </Button>
 
-                <Button
+                {/* <Button
                   className="btn-signin"
                   onClick={() => handleSubmit(USER_ROLES.DIETITIAN)}
                   type="primary"
@@ -299,7 +294,7 @@ function SignIn() {
                   disabled={isLoading || loginState.adminLoginPending}
                 >
                   Sign In as Dietitian
-                </Button>
+                </Button> */}
               </div>
             </Form.Item>
           </Form>
