@@ -27,7 +27,6 @@ function Tag(props) {
   const handleChangeHot = (tag, checke) => {
     const { selectedTags } = state;
     const nextSelectedTags = checke ? [...selectedTags, tag] : selectedTags.filter(t => t !== tag);
-    // console.log('You are interested in: ', nextSelectedTags);
     setState({
       ...state,
       selectedTags: nextSelectedTags,
