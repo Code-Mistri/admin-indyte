@@ -17,7 +17,7 @@ const { Text } = Typography;
 const ROUTES = {
   ADMIN: '/admin',
   ADMIN_USERS: '/admin/my-users',
-  FORGOT_PASSWORD: '/forgotPassword'
+  FORGOT_PASSWORD: '/forgotPassword',
 };
 
 // Environment variables
@@ -30,11 +30,11 @@ const useLoginState = () => {
     adminLoginPending: false,
     dietitianLoginPending: false,
     keepLoggedIn: false,
-    error: null
+    error: null,
   });
 
   const updateLoginState = (updates) => {
-    setLoginState(prev => ({ ...prev, ...updates }));
+    setLoginState((prev) => ({ ...prev, ...updates }));
   };
 
   const setUserLoginPending = (userRole, pending) => {
@@ -55,7 +55,7 @@ const useLoginState = () => {
     updateLoginState,
     setUserLoginPending,
     clearError,
-    setError
+    setError,
   };
 };
 
@@ -65,35 +65,63 @@ function SignIn() {
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
   const { loginState, updateLoginState, setUserLoginPending, clearError, setError } = useLoginState();
+  const [role, setRole] = useState(null);
 
   // Initialize Auth0 Lock
   const lock = new Auth0Lock(clientId, domain, auth0options);
 
+  //  subdomain-based role detection
+  useEffect(() => {
+    const host = window.location.hostname;
+    const sub = host.split('.')[0];
+    console.log('🔍 Current Host:', host);
+    console.log('🔍 Extracted Subdomain:', sub);
+
+    if (sub === 'admin') {
+      console.log('✅ Role Detected: ADMIN');
+      setRole(USER_ROLES.ADMIN);
+    } else if (sub === 'dietician' || sub === 'dietitian') {
+      console.log('✅ Role Detected: DIETITIAN');
+      setRole(USER_ROLES.DIETITIAN);
+    } else {
+      console.log('⚠️ No specific subdomain found → default DIETITIAN');
+      setRole(USER_ROLES.DIETITIAN); // default fallback
+    }
+  }, []);
+
   // Form validation rules
   const emailRules = [
     { required: true, message: 'Email is required' },
-    { type: 'email', message: 'Please enter a valid email address' }
+    { type: 'email', message: 'Please enter a valid email address' },
   ];
 
   const passwordRules = [
     { required: true, message: 'Password is required' },
-    { min: 6, message: 'Password must be at least 6 characters long' }
+    { min: 6, message: 'Password must be at least 6 characters long' },
   ];
 
   // Navigation handlers
-  const navigateAfterLogin = useCallback((userRole) => {
-    if (userRole === USER_ROLES.ADMIN) {
-      history.push(ROUTES.ADMIN);
-    } else {
-      history.push(ROUTES.ADMIN_USERS);
-    }
-  }, [history]);
+  const navigateAfterLogin = useCallback(
+    (userRole) => {
+      if (userRole === USER_ROLES.ADMIN) {
+        history.push(ROUTES.ADMIN);
+      } else {
+        history.push(ROUTES.ADMIN_USERS);
+      }
+    },
+    [history],
+  );
 
   // Main login handler
+  
   const handleSubmit = useCallback(
     async (userRole) => {
+      console.log(' Login attempt started for role:', userRole);
+
       // Validate user role
       if (!Object.values(USER_ROLES).includes(userRole)) {
+        console.error(' Invalid role passed:', userRole);
+
         setError('Invalid user role specified');
         return;
       }
@@ -101,7 +129,7 @@ function SignIn() {
       // Validate form first using API service
       try {
         const { email, password } = form.getFieldsValue();
-        
+
         // Validate inputs using API service validators
         const emailValidation = AuthApiService.validateEmail(email);
         if (!emailValidation.isValid) {
@@ -119,18 +147,20 @@ function SignIn() {
         clearError();
 
         // Use Redux action which now uses the common API service
-        const loginResponse = await dispatch(login({ 
-          email: email.trim(), 
-          password, 
-          user: userRole 
-        }));
+        const loginResponse = await dispatch(
+          login({
+            email: email.trim(),
+            password,
+            user: userRole,
+          }),
+        );
 
         console.log('Login response:', loginResponse);
 
         // Handle login errors
         if (loginResponse?.err) {
           let errorMessage = 'Login failed. Please try again.';
-          
+
           // Extract error message from response
           if (loginResponse?.err?.err?.errors?.general) {
             errorMessage = loginResponse?.err?.err.errors.general;
@@ -141,7 +171,7 @@ function SignIn() {
           } else if (loginResponse?.err?.err?.message) {
             errorMessage = loginResponse?.err?.err.message;
           }
-          
+
           setError(errorMessage);
           return;
         }
@@ -153,18 +183,18 @@ function SignIn() {
         } else {
           setError('Login failed. Please try again.');
         }
-
       } catch (error) {
         console.error('Login error:', error);
-        const errorMessage = error?.response?.data?.message || 
-                            error?.message || 
-                            'Network error. Please check your connection and try again.';
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Network error. Please check your connection and try again.';
         setError(errorMessage);
       } finally {
         setUserLoginPending(userRole, false);
       }
     },
-    [form, dispatch, setUserLoginPending, clearError, setError, navigateAfterLogin]
+    [form, dispatch, setUserLoginPending, clearError, setError, navigateAfterLogin],
   );
 
   // Auth0 event handler
@@ -198,9 +228,7 @@ function SignIn() {
 
   // Get loading state for specific user role
   const isUserRoleLoading = (userRole) => {
-    return userRole === USER_ROLES.ADMIN 
-      ? loginState.adminLoginPending 
-      : loginState.dietitianLoginPending;
+    return userRole === USER_ROLES.ADMIN ? loginState.adminLoginPending : loginState.dietitianLoginPending;
   };
 
   return (
@@ -215,7 +243,7 @@ function SignIn() {
         footer={[
           <Button key="ok" type="primary" onClick={clearError}>
             OK
-          </Button>
+          </Button>,
         ]}
       >
         <Card>
@@ -225,49 +253,24 @@ function SignIn() {
 
       <AuthWrapper>
         <div className="auth-contents">
-          <Form 
-            name="login" 
-            form={form} 
-            layout="vertical"
-            autoComplete="off"
-          >
+          <Form name="login" form={form} layout="vertical" autoComplete="off">
             <Heading as="h3">
-              Sign in to <span className="color-secondary">Admin</span>
+              Sign in to <span className="color-secondary">{role === USER_ROLES.ADMIN ? 'Admin' : 'Dietitian'}</span>{' '}
             </Heading>
 
-            <Form.Item
-              name="email"
-              label="Email Address"
-              rules={emailRules}
-            >
-              <Input 
-                placeholder="Enter your email address"
-                autoComplete="email"
-              />
+            <Form.Item name="email" label="Email Address" rules={emailRules}>
+              <Input placeholder="Enter your email address" autoComplete="email" />
             </Form.Item>
 
-            <Form.Item 
-              name="password" 
-              label="Password"
-              rules={passwordRules}
-            >
-              <Input.Password 
-                placeholder="Enter your password"
-                autoComplete="current-password"
-              />
+            <Form.Item name="password" label="Password" rules={passwordRules}>
+              <Input.Password placeholder="Enter your password" autoComplete="current-password" />
             </Form.Item>
 
             <div className="auth-form-action">
-              <Checkbox 
-                onChange={handleKeepLoggedInChange} 
-                checked={loginState.keepLoggedIn}
-              >
+              <Checkbox onChange={handleKeepLoggedInChange} checked={loginState.keepLoggedIn}>
                 Keep me logged in
               </Checkbox>
-              <NavLink 
-                className="forgot-pass-link" 
-                to={ROUTES.FORGOT_PASSWORD}
-              >
+              <NavLink className="forgot-pass-link" to={ROUTES.FORGOT_PASSWORD}>
                 Forgot password?
               </NavLink>
             </div>
@@ -276,16 +279,16 @@ function SignIn() {
               <div className="flex justify-between gap-less">
                 <Button
                   className="btn-signin"
-                  onClick={() => handleSubmit(USER_ROLES.ADMIN)}
+                  onClick={() => handleSubmit(role)}
                   type="primary"
                   shape="round"
                   size="large"
                   loading={isUserRoleLoading(USER_ROLES.ADMIN)}
                   disabled={isLoading || loginState.dietitianLoginPending}
                 >
-                  Sign In as Admin
+                  {role === USER_ROLES.ADMIN ? 'Sign In as Admin' : 'Sign In as Dietitian'}
                 </Button>
-                
+
                 <Button
                   className="btn-signin"
                   onClick={() => handleSubmit(USER_ROLES.DIETITIAN)}
