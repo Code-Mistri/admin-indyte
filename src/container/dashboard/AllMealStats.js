@@ -109,12 +109,25 @@ export default function AllMealStats() {
     }
   }, [buildQueryParams, setMealsStat]);
 
+  function deleteAllCookies() {
+    document.cookie.split(';').forEach((cookie) => {
+      const name = cookie.split('=')[0].trim();
+      // Try deleting for both root and current path
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${window.location.pathname};`;
+    });
+  }
+
   const fetchAllUsers = useCallback(async () => {
     try {
       let res;
       let data;
       if (userRole === 'dietician') {
         res = await axios.get(`${API_ENDPOINT}/getclients?dieticianId=${id}`);
+        if (res.data?.clients[0]?.isDeleted === true) {
+          deleteAllCookies();
+          return; 
+        }
         if (res.status !== 200) {
           throw new Error('Could not get users');
         }
@@ -139,7 +152,7 @@ export default function AllMealStats() {
       if (res.status !== 200) {
         throw new Error('Could not retrieve data');
       }
-      const {data} = res;
+      const { data } = res;
       setAllDieticians(data.dieticians);
     } catch (err) {
       console.error({ err });
@@ -152,10 +165,7 @@ export default function AllMealStats() {
     const initializeData = async () => {
       setLoading(true);
       try {
-        await Promise.all([
-          fetchAllDietitians(),
-          fetchAllUsers(),
-        ]);
+        await Promise.all([fetchAllDietitians(), fetchAllUsers()]);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -388,38 +398,40 @@ export default function AllMealStats() {
               <Option value="pending">Pending</Option>
               <Option value="finished">Finished</Option>
             </Select>,
-           ...(userRole !== 'dietician' ? [
-            <Select
-              key="dietitian-select"
-              showSearch
-              placeholder="Filter by Dietitian"
-              optionFilterProp="children"
-              listHeight={160}
-              value={selDietitian}
-              allowClear
-              filterOption={(input, option) =>
-                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-              onSelect={(value) => handleFilterChange('dietitian', value)}
-              onClear={() => handleFilterChange('dietitian', null)}
-            >
-              {allDietitians.map((dietician) => (
-                <Option key={dietician.id} value={dietician.id}>
-                  {dietician.name}
-                </Option>
-              ))}
-            </Select>
-          ] : []),
+            ...(userRole !== 'dietician'
+              ? [
+                  <Select
+                    key="dietitian-select"
+                    showSearch
+                    placeholder="Filter by Dietitian"
+                    optionFilterProp="children"
+                    listHeight={160}
+                    value={selDietitian}
+                    allowClear
+                    filterOption={(input, option) =>
+                      option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                    onSelect={(value) => handleFilterChange('dietitian', value)}
+                    onClear={() => handleFilterChange('dietitian', null)}
+                  >
+                    {allDietitians.map((dietician) => (
+                      <Option key={dietician.id} value={dietician.id}>
+                        {dietician.name}
+                      </Option>
+                    ))}
+                  </Select>,
+                ]
+              : []),
             // eslint-disable-next-line react/button-has-type
-            <button 
+            <button
               key="clear-filters"
               onClick={clearFilters}
-              style={{ 
-                padding: '4px 15px', 
-                backgroundColor: '#f0f0f0', 
+              style={{
+                padding: '4px 15px',
+                backgroundColor: '#f0f0f0',
                 border: '1px solid #d9d9d9',
                 borderRadius: '6px',
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}
             >
               Clear Filters
@@ -443,8 +455,7 @@ export default function AllMealStats() {
                       current: pagination.currentPage,
                       pageSize: pagination.perPage,
                       total: pagination.totalCount,
-                      showTotal: (total, range) => 
-                        `${range[0]}-${range[1]} of ${total} items`,
+                      showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
                       showSizeChanger: true,
                       showQuickJumper: true,
                       pageSizeOptions: ['10', '20', '50', '100'],

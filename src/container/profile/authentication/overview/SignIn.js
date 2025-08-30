@@ -271,7 +271,7 @@ function SignIn() {
             </div>
 
             <Form.Item>
-              <div className="flex justify-between gap-less">
+              <div className="flex justify-center gap-less">
                 <Button
                   className="btn-signin"
                   onClick={() => handleSubmit(role)}

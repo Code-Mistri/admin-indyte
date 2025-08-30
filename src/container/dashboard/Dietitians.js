@@ -70,24 +70,26 @@ const useDietitianActions = () => {
     [fetchAllDietitians, setError],
   );
 
-  const deleteDietitian = useCallback(
-    async (id) => {
-      try {
-        const res = await axios.delete(`${API_ENDPOINT}/deletedietbyid/${id}`);
-        if (res.status === 200) {
-          const updatedDietitians = allDietitians.filter((diet) => diet.id !== id);
-          setAllDieticians(updatedDietitians);
-          message.success('Dietitian deleted successfully');
-          return true;
-        }
-      } catch (err) {
-        console.error('Delete error:', err);
-        setError('Could not delete, try again');
-        return false;
+const deleteDietitian = useCallback(
+  async (id) => {
+    try {
+      const res = await axios.delete(`${API_ENDPOINT}/deletedietbyid/${id}`);
+   if (res.data?.message === "Dietician deleted successfully") {
+  const updatedDietitians = allDietitians.filter((diet) => diet.id !== id);
+  setAllDieticians(updatedDietitians);
+  message.success("Dietitian deleted successfully");
+    setAllDieticians(updatedDietitians);
+        message.success("Dietitian deleted successfully");
+        return true;
       }
-    },
-    [allDietitians, setAllDieticians, setError],
-  );
+    } catch (err) {
+      console.error("❌ Delete error:", err);
+      setError("Could not delete, try again");
+      return false;
+    }
+  },
+  [allDietitians, setAllDieticians, setError],
+);
 
   return {
     allDietitians,
@@ -500,7 +502,7 @@ const Dietitians = () => {
             >
               <EyeOpenIcon />
             </Button>
-            <Button
+            {/* <Button
               type="default"
               shape="circle"
               title="Edit Dietitian"
@@ -508,8 +510,8 @@ const Dietitians = () => {
               onClick={() => handleModalToggle('update', true, dietitian)}
             >
               {loadingStates.update ? <Loader2 className="animate-spin" size={16} /> : <Pencil2Icon />}
-            </Button>
-            {/* <Button
+            </Button> */}
+            <Button
               type="primary"
               danger
               shape="circle"
@@ -519,7 +521,7 @@ const Dietitians = () => {
               onClick={() => handleDelete(record.key)}
             >
               <TrashIcon />
-            </Button> */}
+            </Button>
           </div>
         );
       },

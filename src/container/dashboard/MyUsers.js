@@ -27,12 +27,22 @@ export default function Users() {
     };
   });
   const userRole = decryptData({ ciphertext: role, key: process.env.REACT_APP_COOKIE_SECRET });
-
+ function deleteAllCookies() {
+    document.cookie.split(';').forEach((cookie) => {
+      const name = cookie.split('=')[0].trim();
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${window.location.pathname};`;
+    });
+  }
   useEffect(() => {
     setLoading(true);
     const fetchUser = async () => {
       try {
         const res = await api.get(`${API_ENDPOINT}/getclients?dieticianId=${id}`);
+        if (res.data?.clients?.isDeleted === true) {
+          deleteAllCookies();
+          return; 
+        }
         if (res.status !== 200) {
           throw new Error('Request Failed');
         }
