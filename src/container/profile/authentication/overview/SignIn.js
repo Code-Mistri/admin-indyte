@@ -144,7 +144,7 @@ function SignIn() {
         // Use Redux action which now uses the common API service
         const loginResponse = await dispatch(
           login({
-            email: email.trim(),
+            email: email.toLowerCase().trim(),
             password,
             user: userRole,
           }),

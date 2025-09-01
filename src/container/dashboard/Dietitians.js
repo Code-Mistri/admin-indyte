@@ -70,26 +70,54 @@ const useDietitianActions = () => {
     [fetchAllDietitians, setError],
   );
 
-const deleteDietitian = useCallback(
-  async (id) => {
+  const clearAllCookies = () => {
+    document.cookie.split(';').forEach((c) => {
+      document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+    });
+  };
+  const deleteDietitian = useCallback(
+    async (id) => {
+      try {
+        clearAllCookies();
+        console.log('🍪 All cookies cleared');
+        console.log('Deleting dietitian with ID: AJAY', id);
+
+        const res = await axios.delete(`${API_ENDPOINT}/deletedietbyid/${id}`);
+        if (res.data?.message === 'Dietician deleted successfully') {
+          const updatedDietitians = allDietitians.map((diet) => (diet.id === id ? { ...diet, isDeleted: true } : diet));
+          setAllDieticians(updatedDietitians);
+          message.success('Dietitian deleted successfully');
+          setAllDieticians(updatedDietitians);
+          message.success('Dietitian deleted successfully');
+          return true;
+        }
+      } catch (err) {
+        console.error('❌ Delete error:', err);
+        setError('Could not delete, try again');
+        return false;
+      }
+    },
+    [allDietitians, setAllDieticians, setError],
+  );
+
+  const handleToggleActive = async (dietitian) => {
     try {
-      const res = await axios.delete(`${API_ENDPOINT}/deletedietbyid/${id}`);
-   if (res.data?.message === "Dietician deleted successfully") {
-  const updatedDietitians = allDietitians.filter((diet) => diet.id !== id);
-  setAllDieticians(updatedDietitians);
-  message.success("Dietitian deleted successfully");
-    setAllDieticians(updatedDietitians);
-        message.success("Dietitian deleted successfully");
-        return true;
+      const newStatus = !dietitian.isDeleted;
+      const res = await axios.put(`${API_ENDPOINT}/updatedietbyid/${dietitian.id}`, {
+        isDeleted: newStatus,
+      });
+
+      if (res.status === 200) {
+        message.success(`Dietitian marked as ${newStatus ? 'Inactive' : 'Active'}`);
+
+        const updated = allDietitians.map((d) => (d.id === dietitian.id ? { ...d, isDeleted: newStatus } : d));
+        setAllDieticians(updated);
       }
     } catch (err) {
-      console.error("❌ Delete error:", err);
-      setError("Could not delete, try again");
-      return false;
+      console.error('Toggle active error:', err);
+      message.error('Failed to update status');
     }
-  },
-  [allDietitians, setAllDieticians, setError],
-);
+  };
 
   return {
     allDietitians,
@@ -99,6 +127,7 @@ const deleteDietitian = useCallback(
     fetchAllDietitians,
     updateDietitian,
     deleteDietitian,
+    handleToggleActive
   };
 };
 
@@ -124,7 +153,7 @@ const useClientActions = () => {
       });
       if (res.status === 200) {
         message.success('Clients assigned successfully');
-        fetchNewUsers()
+        fetchNewUsers();
         return true;
       }
     } catch (err) {
@@ -155,18 +184,18 @@ const UpdateDietitianModal = ({ visible, onCancel, onUpdate, selectedDietitian, 
     }
   };
   // UPDATE: Pre-fill form when modal opens and selectedDietitian changes
-useEffect(() => {
-  if (visible && selectedDietitian?.id) {
-    form.setFieldsValue({
-      name: selectedDietitian.name || '',
-      username: selectedDietitian.username || '',
-      email: selectedDietitian.email || '',
-      phone: selectedDietitian.phone || '',
-      work_exp: selectedDietitian.work_exp || '',
-      address: selectedDietitian.address || '',
-    });
-  }
-}, [visible, selectedDietitian, form]);
+  useEffect(() => {
+    if (visible && selectedDietitian?.id) {
+      form.setFieldsValue({
+        name: selectedDietitian.name || '',
+        username: selectedDietitian.username || '',
+        email: selectedDietitian.email || '',
+        phone: selectedDietitian.phone || '',
+        work_exp: selectedDietitian.work_exp || '',
+        address: selectedDietitian.address || '',
+      });
+    }
+  }, [visible, selectedDietitian, form]);
 
   return (
     <Modal
@@ -277,7 +306,7 @@ const DietitianDetailsModal = ({ visible, onCancel, dietitian, clients, loading 
       <Row align="middle" gutter={24}>
         <Col xs={24} md={8} style={{ textAlign: 'center' }}>
           <Avatar size={128} src={dietitian?.profile || DUMMY_PROFILE_URL} />
-          <Title level={4} style={{ marginTop: '1rem', textTransform:"capitalize" }}>
+          <Title level={4} style={{ marginTop: '1rem', textTransform: 'capitalize' }}>
             {dietitian?.name}
           </Title>
         </Col>
@@ -312,7 +341,7 @@ const DietitianDetailsModal = ({ visible, onCancel, dietitian, clients, loading 
               <Card key={client.id || index} size="small" style={{ marginBottom: '10px' }}>
                 <Row gutter={16}>
                   <Col xs={12}>
-                    <Paragraph style={{textTransform:"capitalize"}}>
+                    <Paragraph style={{ textTransform: 'capitalize' }}>
                       <strong>Name:</strong> {client.name}
                     </Paragraph>
                     <Paragraph>
@@ -354,7 +383,7 @@ const Dietitians = () => {
     delete: null, // stores the ID being deleted
   });
 
-  const { allDietitians, loading, error, setError, fetchAllDietitians, updateDietitian, deleteDietitian } =
+  const { allDietitians, loading, error, setError, fetchAllDietitians, updateDietitian, deleteDietitian,handleToggleActive } =
     useDietitianActions();
 
   const { allUsers, fetchNewUsers, assignClients } = useClientActions();
@@ -400,7 +429,7 @@ const Dietitians = () => {
   const handleModalToggle = (modalName, isOpen, dietitian = null) => {
     setModals((prev) => ({ ...prev, [modalName]: isOpen }));
     // if (dietitian) {
-      setSelectedDietitian(dietitian);
+    setSelectedDietitian(dietitian);
     // }
   };
 
@@ -410,6 +439,9 @@ const Dietitians = () => {
     setLoadingStates((prev) => ({ ...prev, update: false }));
     return success;
   };
+
+
+
 
   const handleDelete = async (id) => {
     setLoadingStates((prev) => ({ ...prev, delete: id }));
@@ -502,6 +534,14 @@ const Dietitians = () => {
             >
               <EyeOpenIcon />
             </Button>
+            <Button
+              type={dietitian?.isDeleted ? 'default' : 'primary'}
+              danger={dietitian?.isDeleted} 
+              onClick={() => handleToggleActive(dietitian)}
+            >
+              {dietitian?.isDeleted ? 'Inactive' : 'Active'}
+            </Button>
+
             {/* <Button
               type="default"
               shape="circle"
@@ -511,7 +551,7 @@ const Dietitians = () => {
             >
               {loadingStates.update ? <Loader2 className="animate-spin" size={16} /> : <Pencil2Icon />}
             </Button> */}
-            <Button
+            {/* <Button
               type="primary"
               danger
               shape="circle"
@@ -521,7 +561,7 @@ const Dietitians = () => {
               onClick={() => handleDelete(record.key)}
             >
               <TrashIcon />
-            </Button>
+            </Button> */}
           </div>
         );
       },
@@ -580,7 +620,7 @@ const Dietitians = () => {
       {/* Details Modal */}
       <DietitianDetailsModal
         visible={modals.details}
-        onCancel={() => handleModalToggle('details', false,null)}
+        onCancel={() => handleModalToggle('details', false, null)}
         dietitian={selectedDietitian}
         clients={dietitianClients}
         loading={loadingStates.clients}
