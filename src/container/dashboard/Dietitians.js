@@ -541,8 +541,7 @@ const Dietitians = () => {
             >
               {dietitian?.isDeleted ? 'Inactive' : 'Active'}
             </Button>
-
-            {/* <Button
+    <Button
               type="default"
               shape="circle"
               title="Edit Dietitian"
@@ -550,7 +549,8 @@ const Dietitians = () => {
               onClick={() => handleModalToggle('update', true, dietitian)}
             >
               {loadingStates.update ? <Loader2 className="animate-spin" size={16} /> : <Pencil2Icon />}
-            </Button> */}
+            </Button> 
+         
             {/* <Button
               type="primary"
               danger
