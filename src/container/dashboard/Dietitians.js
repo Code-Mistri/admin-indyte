@@ -29,8 +29,8 @@ import { DUMMY_PROFILE_URL } from '../../constant';
 
 const { Option } = Select;
 const { Paragraph, Title } = Typography;
+ const { confirm } = Modal;
 
-// Custom hooks for better state management
 const useDietitianActions = () => {
   const { allDietitians, loading, error, setAllDieticians, setLoading, setError } = useAllDieticiansState();
 
@@ -100,14 +100,11 @@ const useDietitianActions = () => {
     [allDietitians, setAllDieticians, setError],
   );
 
-  const handleToggleActive = async (dietitian) => {
+ 
+  const updateDietitianStatus = async (dietitian, newStatus) => {
     try {
-      const newStatus = !dietitian.isDeleted;
-      const res = await axios.put(`${API_ENDPOINT}/updatedietbyid/${dietitian.id}`, {
-        isDeleted: newStatus,
-      });
-
-      if (res.status === 200) {
+      const res = await axios.put(`${API_ENDPOINT}/updatedietbyid/${dietitian.id}`, { isDeleted: newStatus })
+            if (res.status === 200) {
         message.success(`Dietitian marked as ${newStatus ? 'Inactive' : 'Active'}`);
 
         const updated = allDietitians.map((d) => (d.id === dietitian.id ? { ...d, isDeleted: newStatus } : d));
@@ -118,7 +115,28 @@ const useDietitianActions = () => {
       message.error('Failed to update status');
     }
   };
+  const handleToggleActive = (dietitian) => {
+    const newStatus = !dietitian.isDeleted;
 
+    if (newStatus) {
+      confirm({
+        title: 'Unassign Clients Confirmation',
+        content:
+          'Before marking this Dietician as Inactive, all assigned clients will be unassigned. Would you like to proceed?',
+        okText: 'Confirm',
+        cancelText: 'Cancel',
+        okButtonProps: { danger: true },
+        onOk: async () => {
+          await updateDietitianStatus(dietitian, newStatus);
+        },
+        onCancel() {
+          message.info('Action cancelled.');
+        },
+      });
+    } else {
+      updateDietitianStatus(dietitian, newStatus);
+    }
+  };
   return {
     allDietitians,
     loading,
@@ -127,7 +145,7 @@ const useDietitianActions = () => {
     fetchAllDietitians,
     updateDietitian,
     deleteDietitian,
-    handleToggleActive
+    handleToggleActive,
   };
 };
 
@@ -165,7 +183,6 @@ const useClientActions = () => {
   return { allUsers, fetchNewUsers, assignClients };
 };
 
-// Component for the update form modal
 const UpdateDietitianModal = ({ visible, onCancel, onUpdate, selectedDietitian, loading }) => {
   const [form] = Form.useForm();
 
@@ -383,8 +400,16 @@ const Dietitians = () => {
     delete: null, // stores the ID being deleted
   });
 
-  const { allDietitians, loading, error, setError, fetchAllDietitians, updateDietitian, deleteDietitian,handleToggleActive } =
-    useDietitianActions();
+  const {
+    allDietitians,
+    loading,
+    error,
+    setError,
+    fetchAllDietitians,
+    updateDietitian,
+    deleteDietitian,
+    handleToggleActive,
+  } = useDietitianActions();
 
   const { allUsers, fetchNewUsers, assignClients } = useClientActions();
 
@@ -439,10 +464,6 @@ const Dietitians = () => {
     setLoadingStates((prev) => ({ ...prev, update: false }));
     return success;
   };
-
-
-
-
   const handleDelete = async (id) => {
     setLoadingStates((prev) => ({ ...prev, delete: id }));
     await deleteDietitian(id);
@@ -536,12 +557,13 @@ const Dietitians = () => {
             </Button>
             <Button
               type={dietitian?.isDeleted ? 'default' : 'primary'}
-              danger={dietitian?.isDeleted} 
+              {...(dietitian?.isDeleted ? { danger: true } : {})}
               onClick={() => handleToggleActive(dietitian)}
             >
               {dietitian?.isDeleted ? 'Inactive' : 'Active'}
             </Button>
-    <Button
+
+            <Button
               type="default"
               shape="circle"
               title="Edit Dietitian"
@@ -549,8 +571,8 @@ const Dietitians = () => {
               onClick={() => handleModalToggle('update', true, dietitian)}
             >
               {loadingStates.update ? <Loader2 className="animate-spin" size={16} /> : <Pencil2Icon />}
-            </Button> 
-         
+            </Button>
+
             {/* <Button
               type="primary"
               danger
