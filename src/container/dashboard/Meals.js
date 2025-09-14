@@ -35,7 +35,17 @@ const UserInfo = lazy(() => import('./overview/meals/UserInfo'));
 
 const { Option } = Select;
 
-const MEAL_TYPES = ['Dinner', 'Lunch', 'Breakfast', 'Snacks', 'Special Meals'];
+const MEAL_TYPES = [
+  'Early Morning',
+  'After 30 Minutes',
+  'Breakfast',
+  'Mid Meal',
+  'Lunch',
+  'Evening Snacks',
+  'Late Evening',
+  'Dinner',
+  'Bed Time',
+];
 
 // Custom hook for user data fetching
 const useUserData = () => {
@@ -43,12 +53,12 @@ const useUserData = () => {
     role: state.auth.role,
     id: state.auth.id,
   }));
-  
-  const userRole = decryptData({ 
-    ciphertext: role, 
-    key: process.env.REACT_APP_COOKIE_SECRET 
+
+  const userRole = decryptData({
+    ciphertext: role,
+    key: process.env.REACT_APP_COOKIE_SECRET,
   });
-  
+
   return { userRole, id };
 };
 
@@ -60,7 +70,7 @@ const useApiCalls = () => {
   const handleApiCall = useCallback(async (apiCall, successCallback) => {
     setLoading(true);
     setError('');
-    
+
     try {
       const result = await apiCall();
       if (successCallback) successCallback(result);
@@ -79,32 +89,18 @@ const useApiCalls = () => {
 
 // Error Modal Component
 const ErrorModal = ({ error, onClose }) => (
-  <Modal 
-    open={!!error} 
-    onOk={onClose} 
-    onCancel={onClose}
-    title="Error"
-  >
+  <Modal open={!!error} onOk={onClose} onCancel={onClose} title="Error">
     <Card style={{ color: 'red', border: 'none' }}>
-      <Typography.Text type="danger">
-        Oops! {error}
-      </Typography.Text>
+      <Typography.Text type="danger">Oops! {error}</Typography.Text>
     </Card>
   </Modal>
 );
 
 // Success Modal Component
 const SuccessModal = ({ success, onClose, message }) => (
-  <Modal 
-    open={success} 
-    onOk={onClose} 
-    onCancel={onClose}
-    title="Success"
-  >
+  <Modal open={success} onOk={onClose} onCancel={onClose} title="Success">
     <Card style={{ border: 'none' }}>
-      <Typography.Text style={{ color: 'green' }}>
-        {message}
-      </Typography.Text>
+      <Typography.Text style={{ color: 'green' }}>{message}</Typography.Text>
     </Card>
   </Modal>
 );
@@ -121,8 +117,9 @@ function MealsAndWorkouts() {
   // Fetch all users
   const fetchAllUsers = useCallback(async () => {
     const apiCall = async () => {
-      let res; let data;
-      
+      let res;
+      let data;
+
       if (userRole === 'dietician') {
         res = await axios.get(`${API_ENDPOINT}/getclients?dieticianId=${id}`);
         if (res.status !== 200) throw new Error('Could not get users');
@@ -132,7 +129,7 @@ function MealsAndWorkouts() {
         if (res.status !== 200) throw new Error('Could not get users');
         data = res.data?.users || [];
       }
-      
+
       return data;
     };
 
@@ -189,7 +186,7 @@ function MealsAndWorkouts() {
   return (
     <>
       <ErrorModal error={error} onClose={() => setError('')} />
-      
+
       <PageHeader
         className="header-boxed"
         ghost
@@ -215,9 +212,7 @@ function MealsAndWorkouts() {
                 <UserInfo page="meals" userDiticianName={dietician?.name} />
               ) : (
                 <Card>
-                  <Typography.Text type="secondary">
-                    Please select a user to view meal information
-                  </Typography.Text>
+                  <Typography.Text type="secondary">Please select a user to view meal information</Typography.Text>
                 </Card>
               )}
             </Suspense>
@@ -244,7 +239,7 @@ function MealsAndWorkouts() {
 const MealsHeader = ({ meals }) => {
   const { userMeals, setUserMeals } = useUserMeals();
   const { selectedUserForMeal } = useSeletedUserForMealState();
-  
+
   // Form state
   const [formData, setFormData] = useState({
     selectedDateTime: null,
@@ -252,7 +247,7 @@ const MealsHeader = ({ meals }) => {
     mealType: null,
     quantity: null,
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -260,18 +255,12 @@ const MealsHeader = ({ meals }) => {
   // Form validation
   const isFormValid = () => {
     const { selectedDateTime, mealName, mealType, quantity } = formData;
-    return !!(
-      selectedDateTime && 
-      mealName && 
-      mealType && 
-      quantity && 
-      selectedUserForMeal?.id
-    );
+    return !!(selectedDateTime && mealName && mealType && quantity && selectedUserForMeal?.id);
   };
 
   // Form handlers
   const updateFormField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const resetForm = () => {
@@ -299,7 +288,7 @@ const MealsHeader = ({ meals }) => {
     setError('');
 
     try {
-      const selectedMeal = meals.find(meal => meal.id === formData.mealName);
+      const selectedMeal = meals.find((meal) => meal.id === formData.mealName);
       if (!selectedMeal) {
         setError('Selected meal not found');
         return;
@@ -308,13 +297,13 @@ const MealsHeader = ({ meals }) => {
       const payload = {
         userId: selectedUserForMeal.id,
         date: formData.selectedDateTime,
-        mealTime: formData.mealType.toUpperCase(),
+        mealTime: formData.mealType.toUpperCase().replaceAll(' ', '_'),
         mealId: selectedMeal.id,
         quantity: formData.quantity,
       };
 
       const response = await axios.post(`${API_ENDPOINT}/assignmeal`, payload);
-      
+
       if (response.status !== 200) {
         const errorMessage = response.data?.message || 'Failed to assign meal';
         setError(errorMessage);
@@ -335,10 +324,9 @@ const MealsHeader = ({ meals }) => {
       setUserMeals([...userMeals, newMeal]);
       setSuccess(true);
       resetForm();
-      
+
       // Show success message
       message.success('Meal assigned successfully');
-      
     } catch (error) {
       console.error('Error assigning meal:', error);
       setError(error.response?.data?.message || 'Error assigning meal');
@@ -350,12 +338,8 @@ const MealsHeader = ({ meals }) => {
   return (
     <>
       <ErrorModal error={error} onClose={() => setError('')} />
-      <SuccessModal 
-        success={success} 
-        onClose={() => setSuccess(false)} 
-        message="Meal Assigned Successfully" 
-      />
-      
+      <SuccessModal success={success} onClose={() => setSuccess(false)} message="Meal Assigned Successfully" />
+
       <SearchUser page="meals" />
 
       {/* Meal Selection */}
@@ -421,27 +405,27 @@ const MealsHeader = ({ meals }) => {
       />
 
       {/* Date Picker */}
-      <DatePicker 
-        onChange={handleDateChange} 
+      <DatePicker
+        onChange={handleDateChange}
         needConfirm={false}
         value={formData.selectedDateTime ? moment(formData.selectedDateTime) : null}
         placeholder="Select Date"
       />
 
       {/* Add Meal Button */}
-      <Button 
-        size="small" 
-        type="primary" 
+      <Button
+        size="small"
+        type="primary"
         onClick={handleAddMeal}
         disabled={!isFormValid() || loading}
-        style={{ 
+        style={{
           opacity: !isFormValid() ? 0.6 : 1,
-          cursor: !isFormValid() ? 'not-allowed' : 'pointer'
+          cursor: !isFormValid() ? 'not-allowed' : 'pointer',
         }}
       >
         {loading ? (
           <>
-            <Loader2 className="animate-spin" size={20} /> 
+            <Loader2 className="animate-spin" size={20} />
             <span style={{ marginLeft: '4px' }}>Adding...</span>
           </>
         ) : (
