@@ -1,17 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Modal, Skeleton, Collapse, Card, Typography, Avatar } from 'antd';
+import { Table, Button, Modal, Skeleton, Collapse, Card, Typography } from 'antd';
 import { CaretRightOutlined } from '@ant-design/icons';
 
 import { PropTypes } from 'prop-types';
 import { Loader2 } from 'lucide-react';
-import { Cards } from '../../../../components/cards/frame/cards-frame';
 import { useAllMeateStore, useUserMeals } from '../../../../zustand/meal-store';
 import { API_ENDPOINT } from '../../../../utils/endpoints';
 import { useSeletedUserForMealState } from '../../../../zustand/users-store';
-import { api } from '../../../../utils/axios-util';
 
 const { Panel } = Collapse;
+
+const MEAL_TYPES = [
+  { key: 'EARLY_MORNING', label: 'Early Morning' },
+  { key: 'AFTER_30_MINUTES', label: 'After 30 Minutes' },
+  { key: 'BREAKFAST', label: 'Breakfast' },
+  { key: 'MID_MEAL', label: 'Mid Meal' },
+  { key: 'LUNCH', label: 'Lunch' },
+  { key: 'EVENING_SNACKS', label: 'Evening Snacks' },
+  { key: 'LATE_EVENING', label: 'Late Evening' },
+  { key: 'DINNER', label: 'Dinner' },
+  { key: 'BED_TIME', label: 'Bed Time' },
+];
 
 const MealUpdate = () => {
   const { userMeals, setUserMeals } = useUserMeals();
@@ -22,9 +32,8 @@ const MealUpdate = () => {
   const [delMeal, setDelMeal] = useState({ mealId: '', isPending: false, date: '' });
 
   const { meals } = useAllMeateStore();
-  const [breakFast, setBreakFast] = useState([]);
-  const [lunch, setLunch] = useState([]);
-  const [dinner, setDinner] = useState([]);
+  const [groupedMeals, setGroupedMeals] = useState({});
+
   if (!meals) {
     alert('no data');
     return;
@@ -33,7 +42,6 @@ const MealUpdate = () => {
   const hanldeRemove = async (meal) => {
     setDelMeal({ isPending: true, mealId: meal.mealId, date: meal.date });
 
-    console.log({ del: meal });
     try {
       if (!meal.userId || !meal.mealId || !meal.date || !meal.mealTime) {
         throw new Error('Missing values please try again or refresh the page');
@@ -53,10 +61,6 @@ const MealUpdate = () => {
           item.date !== meal.date ||
           item.mealTime.toUpperCase() !== meal.mealTime.toUpperCase(),
       );
-      console.log({ filterUserMeals });
-      // &&
-      // item.date !== meal.date &&
-      // item.mealTime.toUpperCase() !== meal.mealTime.toUpperCase(),
       setUserMeals(filterUserMeals);
     } catch (err) {
       console.error({ err });
@@ -65,7 +69,6 @@ const MealUpdate = () => {
       setDelMeal({ isPending: false, mealId: '', date: '' });
     }
   };
-  console.log({ userMeals });
 
   const columns = [
     {
@@ -77,7 +80,7 @@ const MealUpdate = () => {
           record?.imgUrl ||
           record?.image ||
           'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zm9vZHxlbnwwfHwwfHx8MA%3D%3D';
-  
+
         return (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <img
@@ -105,27 +108,19 @@ const MealUpdate = () => {
       title: 'Status',
       dataIndex: ['finished'],
       key: 'finished',
-      render: (finished) => {
-        console.log({ finished });
-        return finished ? (
+      render: (finished) =>
+        finished ? (
           <div style={{ fontWeight: 'bold', color: 'green' }}>Finished</div>
         ) : (
           <div style={{ fontWeight: 'bold', color: 'orange' }}>Pending</div>
-        );
-      },
+        ),
     },
     {
       title: 'Assigned For',
       dataIndex: ['date'],
       key: 'date',
       sorter: (a, b) => new Date(a.date) - new Date(b.date),
-      // render: (date) => {
-      //   const assignedMealDate = new Date(date);
-      //   const options = { weekday: 'long' };
-      //   return assignedMealDate.toLocaleDateString('en-In', options);
-      // },
     },
-
     {
       title: 'Quantity',
       dataIndex: ['quantity'],
@@ -134,22 +129,19 @@ const MealUpdate = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => {
-        console.log({ text, record, delMeal });
-        return (
-          <Button type="primary" onClick={() => hanldeRemove(record)}>
-            <div className="flex justify-center item-center gap-less w-full h-full">
-              {delMeal.isPending && delMeal.mealId === record.mealId && delMeal.date === record.date ? (
-                <>
-                  <Loader2 className="animate-spin" size={24} /> wait...
-                </>
-              ) : (
-                'Remove'
-              )}
-            </div>
-          </Button>
-        );
-      },
+      render: (text, record) => (
+        <Button type="primary" onClick={() => hanldeRemove(record)}>
+          <div className="flex justify-center item-center gap-less w-full h-full">
+            {delMeal.isPending && delMeal.mealId === record.mealId && delMeal.date === record.date ? (
+              <>
+                <Loader2 className="animate-spin" size={24} /> wait...
+              </>
+            ) : (
+              'Remove'
+            )}
+          </div>
+        </Button>
+      ),
     },
   ];
 
@@ -163,7 +155,6 @@ const MealUpdate = () => {
       }
 
       const useMealData = await response.data.data;
-      console.log('ursermealDAta', { useMealData });
       setUserMeals(useMealData);
     };
 
@@ -174,36 +165,27 @@ const MealUpdate = () => {
 
   useEffect(() => {
     const groupMeals = async () => {
-      console.log('firirng');
-      console.log({ userMeals }, 'j');
-      const dinnerGroup = [];
-      const breakfastGroup = [];
-      const luncGroup = [];
+      const grouped = {};
+
+      // initialize each type with empty array
+      MEAL_TYPES.forEach((mealType) => {
+        grouped[mealType.key] = [];
+      });
 
       userMeals.forEach((data) => {
-        console.log('here', { data });
-
-        if (data?.mealTime?.toLowerCase() === 'dinner') {
-          console.log('donner', { data, time: data.mealTime });
-          dinnerGroup.push(data);
-        } else if (data?.mealTime?.toLowerCase() === 'lunch') {
-          luncGroup.push(data);
-        } else if (data?.mealTime?.toLowerCase() === 'breakfast') {
-          breakfastGroup.push(data);
+        const normalizedKey = data?.mealTime?.toUpperCase().replace(/\s+/g, '_');
+        if (grouped[normalizedKey]) {
+          grouped[normalizedKey].push(data);
         }
       });
-      // console.log(breakfastGroup);
 
-      setBreakFast(breakfastGroup);
-      setDinner(dinnerGroup);
-      setLunch(luncGroup);
-    };
-    groupMeals().then(() => {
+      setGroupedMeals(grouped);
       setLoading(false);
-    });
+    };
+
+    groupMeals();
   }, [userMeals]);
 
-  console.log({ userMeals, breakFast, dinner, lunch });
   if (!selectedUserForMeal) {
     return <Card>Select a user</Card>;
   }
@@ -219,20 +201,19 @@ const MealUpdate = () => {
         </Modal>
       )}
       <div style={{ width: '100%' }}>
-        <div style={{ minHeight: '4rem', marginTop: '1rem' }}>
-          {loading ? (
-            <Skeleton active />
-          ) : (
-            <CollapsibleMealTable type="Break Fast" data={breakFast} columns={columns} />
-          )}
-        </div>
-        <div style={{ minHeight: '4rem', marginTop: '1rem' }}>
-          {loading ? <Skeleton active /> : <CollapsibleMealTable type="Lunch" data={lunch} columns={columns} />}
-        </div>
-
-        <div style={{ minHeight: '4rem', marginTop: '1rem' }}>
-          {loading ? <Skeleton active /> : <CollapsibleMealTable type="Dinner" data={dinner} columns={columns} />}
-        </div>
+        {MEAL_TYPES.map((mealType) => (
+          <div key={mealType.key} style={{ minHeight: '4rem', marginTop: '1rem' }}>
+            {loading ? (
+              <Skeleton active />
+            ) : (
+              <CollapsibleMealTable
+                type={mealType.label}
+                data={groupedMeals[mealType.key] || []}
+                columns={columns}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
