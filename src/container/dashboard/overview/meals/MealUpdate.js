@@ -17,11 +17,18 @@ const MEAL_TYPES = [
   { key: 'BREAKFAST', label: 'Breakfast' },
   { key: 'MID_MEAL', label: 'Mid Meal' },
   { key: 'LUNCH', label: 'Lunch' },
+
+  { key: 'PRE_LUNCH', label: 'Pre Lunch' },
+  { key: 'POST_LUNCH', label: 'Post Lunch' },
+  { key: 'PRE_DINNER', label: 'Pre Dinner' },
+  { key: 'POST_DINNER', label: 'Post Dinner' },
+
   { key: 'EVENING_SNACKS', label: 'Evening Snacks' },
   { key: 'LATE_EVENING', label: 'Late Evening' },
   { key: 'DINNER', label: 'Dinner' },
   { key: 'BED_TIME', label: 'Bed Time' },
 ];
+
 
 const MealUpdate = () => {
   const { userMeals, setUserMeals } = useUserMeals();

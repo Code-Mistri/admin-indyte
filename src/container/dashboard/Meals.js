@@ -34,18 +34,24 @@ const SearchUser = lazy(() => import('./overview/meals/SearchUser'));
 const UserInfo = lazy(() => import('./overview/meals/UserInfo'));
 
 const { Option } = Select;
-
 const MEAL_TYPES = [
   'Early Morning',
   'After 30 Minutes',
   'Breakfast',
   'Mid Meal',
   'Lunch',
+
+  'Pre Lunch',
+  'Post Lunch',
+  'Pre Dinner',
+  'Post Dinner',
+
   'Evening Snacks',
   'Late Evening',
   'Dinner',
   'Bed Time',
 ];
+
 
 // Custom hook for user data fetching
 const useUserData = () => {
